@@ -1,0 +1,15 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Temporary placeholder so Prisma can generate a client.
+// Replace with real domain models in future steps.
+model TemporaryPlaceholder {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+}
