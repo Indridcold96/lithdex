@@ -7,9 +7,146 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Temporary placeholder so Prisma can generate a client.
-// Replace with real domain models in future steps.
-model TemporaryPlaceholder {
+model User {
+  id          String   @id @default(cuid())
+  username    String   @unique
+  email       String   @unique
+  displayName String
+  avatarUrl   String?
+  bio         String?
+  role        String   @default("user")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  analyses Analysis[]
+  comments AnalysisComment[]
+  feedback AnalysisFeedback[]
+}
+
+model Mineral {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  name              String
+  scientificName    String?
+  category          String?
+  description       String?
+  hardnessMin       Float?
+  hardnessMax       Float?
+  crystalSystem     String?
+  colorNotes        String?
+  lusterNotes       String?
+  transparencyNotes String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  aliases MineralAlias[]
+  results AnalysisResult[]
+}
+
+model MineralAlias {
   id        String   @id @default(cuid())
+  mineralId String
+  alias     String
+  aliasType String?
   createdAt DateTime @default(now())
+
+  mineral Mineral @relation(fields: [mineralId], references: [id], onDelete: Cascade)
+
+  @@unique([mineralId, alias])
+}
+
+model Analysis {
+  id          String    @id @default(cuid())
+  userId      String?
+  title       String?
+  status      String
+  visibility  String    @default("public")
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user         User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  images       AnalysisImage[]
+  interactions AnalysisInteraction[]
+  result       AnalysisResult?
+  comments     AnalysisComment[]
+  feedback     AnalysisFeedback[]
+
+  @@index([userId])
+  @@index([visibility, publishedAt])
+}
+
+model AnalysisImage {
+  id               String   @id @default(cuid())
+  analysisId       String
+  storageKey       String
+  originalFilename String?
+  mimeType         String?
+  sortOrder        Int      @default(0)
+  createdAt        DateTime @default(now())
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+}
+
+model AnalysisInteraction {
+  id              String   @id @default(cuid())
+  analysisId      String
+  role            String
+  interactionType String
+  content         String
+  metadataJson    Json?
+  createdAt       DateTime @default(now())
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+}
+
+model AnalysisResult {
+  id               String   @id @default(cuid())
+  analysisId       String   @unique
+  primaryMineralId String?
+  confidence       Float?
+  explanation      String?
+  alternativesJson Json?
+  sourceType       String
+  rawOutputJson    Json?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  analysis       Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  primaryMineral Mineral? @relation(fields: [primaryMineralId], references: [id], onDelete: SetNull)
+
+  @@index([primaryMineralId])
+}
+
+model AnalysisComment {
+  id         String   @id @default(cuid())
+  analysisId String
+  userId     String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([analysisId])
+  @@index([userId])
+}
+
+model AnalysisFeedback {
+  id         String   @id @default(cuid())
+  analysisId String
+  userId     String
+  type       String
+  createdAt  DateTime @default(now())
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, userId])
+  @@index([userId])
 }
