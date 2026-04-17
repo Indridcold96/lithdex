@@ -89,28 +89,33 @@ function AnalysisCard({ analysis }: { analysis: AnalysisDto }) {
   const createdLabel = formatDate(new Date(analysis.createdAt));
 
   return (
-    <Card className="overflow-hidden">
-      {cover ? (
-        <div className="relative aspect-video w-full overflow-hidden bg-muted">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={cover.url}
-            alt={cover.originalFilename ?? "Analysis cover image"}
-            className="h-full w-full object-cover"
-          />
-          {extraCount > 0 ? (
-            <span className="absolute bottom-2 right-2 rounded-md bg-background/80 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur">
-              +{extraCount} more
-            </span>
-          ) : null}
-        </div>
-      ) : null}
-      <CardHeader>
-        <CardTitle className="text-base">
-          {analysis.title ?? "Untitled analysis"}
-        </CardTitle>
-        <CardDescription>{createdLabel}</CardDescription>
-      </CardHeader>
-    </Card>
+    <Link
+      href={`/analyses/${analysis.id}`}
+      className="group rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+    >
+      <Card className="overflow-hidden transition group-hover:border-foreground/30">
+        {cover ? (
+          <div className="relative aspect-video w-full overflow-hidden bg-muted">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cover.url}
+              alt={cover.originalFilename ?? "Analysis cover image"}
+              className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+            />
+            {extraCount > 0 ? (
+              <span className="absolute bottom-2 right-2 rounded-md bg-background/80 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur">
+                +{extraCount} more
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+        <CardHeader>
+          <CardTitle className="text-base">
+            {analysis.title ?? "Untitled analysis"}
+          </CardTitle>
+          <CardDescription>{createdLabel}</CardDescription>
+        </CardHeader>
+      </Card>
+    </Link>
   );
 }

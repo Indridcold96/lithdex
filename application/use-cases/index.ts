@@ -1,5 +1,6 @@
 export * from "./create-analysis-with-uploads";
 export * from "./get-analysis-by-id";
+export * from "./get-analysis-detail";
 export * from "./list-public-analyses";
 export * from "./list-user-analyses";
 export * from "./access-analysis-image";

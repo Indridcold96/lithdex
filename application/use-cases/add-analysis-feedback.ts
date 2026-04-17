@@ -4,7 +4,7 @@ import type { AnalysisFeedbackRepository } from "@/domain/repositories/AnalysisF
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 import { canReceiveCommunityFeedback } from "@/domain/rules/analysis";
 
-import { DuplicateError, NotFoundError, ValidationError } from "../errors";
+import { NotFoundError, ValidationError } from "../errors";
 
 export interface AddAnalysisFeedbackInput {
   analysisId: string;
@@ -41,18 +41,12 @@ export function makeAddAnalysisFeedback(deps: AddAnalysisFeedbackDeps) {
       );
     }
 
-    const existing =
-      await deps.analysisFeedbackRepository.findByAnalysisAndUser(
-        input.analysisId,
-        input.userId
-      );
-    if (existing) {
-      throw new DuplicateError(
-        "This user has already left feedback for this analysis."
-      );
-    }
-
-    return deps.analysisFeedbackRepository.create({
+    // Upsert respects the unique constraint on (analysisId, userId) and
+    // naturally handles three cases without duplicating rows:
+    //  - no existing feedback  -> create
+    //  - existing same type    -> update to same type (effectively no-op)
+    //  - existing opposite type -> update to new type
+    return deps.analysisFeedbackRepository.upsert({
       analysisId: input.analysisId,
       userId: input.userId,
       type: input.type,

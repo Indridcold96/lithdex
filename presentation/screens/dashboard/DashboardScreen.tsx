@@ -171,38 +171,43 @@ function DashboardAnalysisCard({ analysis }: { analysis: AnalysisDto }) {
   const isPublic = analysis.visibility === AnalysisVisibility.PUBLIC;
 
   return (
-    <Card className="overflow-hidden">
-      {cover ? (
-        <div className="relative aspect-video w-full overflow-hidden bg-muted">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={cover.url}
-            alt={cover.originalFilename ?? "Analysis cover image"}
-            className="h-full w-full object-cover"
-          />
-          {extraCount > 0 ? (
-            <span className="absolute bottom-2 right-2 rounded-md bg-background/80 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur">
-              +{extraCount} more
+    <Link
+      href={`/analyses/${analysis.id}`}
+      className="group rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+    >
+      <Card className="overflow-hidden transition group-hover:border-foreground/30">
+        {cover ? (
+          <div className="relative aspect-video w-full overflow-hidden bg-muted">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cover.url}
+              alt={cover.originalFilename ?? "Analysis cover image"}
+              className="h-full w-full object-cover transition group-hover:scale-[1.02]"
+            />
+            {extraCount > 0 ? (
+              <span className="absolute bottom-2 right-2 rounded-md bg-background/80 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur">
+                +{extraCount} more
+              </span>
+            ) : null}
+            <span
+              className={
+                "absolute top-2 left-2 rounded-md px-2 py-0.5 text-xs font-medium backdrop-blur " +
+                (isPublic
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted/90 text-muted-foreground")
+              }
+            >
+              {isPublic ? "Public" : "Private"}
             </span>
-          ) : null}
-          <span
-            className={
-              "absolute top-2 left-2 rounded-md px-2 py-0.5 text-xs font-medium backdrop-blur " +
-              (isPublic
-                ? "bg-primary/10 text-primary"
-                : "bg-muted/90 text-muted-foreground")
-            }
-          >
-            {isPublic ? "Public" : "Private"}
-          </span>
-        </div>
-      ) : null}
-      <CardHeader>
-        <CardTitle className="text-base">
-          {analysis.title ?? "Untitled analysis"}
-        </CardTitle>
-        <CardDescription>{createdLabel}</CardDescription>
-      </CardHeader>
-    </Card>
+          </div>
+        ) : null}
+        <CardHeader>
+          <CardTitle className="text-base">
+            {analysis.title ?? "Untitled analysis"}
+          </CardTitle>
+          <CardDescription>{createdLabel}</CardDescription>
+        </CardHeader>
+      </Card>
+    </Link>
   );
 }

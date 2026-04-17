@@ -1,10 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { makeGetAnalysisById } from "@/application/use-cases/get-analysis-by-id";
+import { makeGetAnalysisDetail } from "@/application/use-cases/get-analysis-detail";
 import { getOptionalSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
+import { PrismaAnalysisCommentRepository } from "@/infrastructure/database/repositories/PrismaAnalysisCommentRepository";
+import { PrismaAnalysisFeedbackRepository } from "@/infrastructure/database/repositories/PrismaAnalysisFeedbackRepository";
 import { PrismaAnalysisImageRepository } from "@/infrastructure/database/repositories/PrismaAnalysisImageRepository";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
+import { PrismaAnalysisResultRepository } from "@/infrastructure/database/repositories/PrismaAnalysisResultRepository";
+import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
 export const runtime = "nodejs";
@@ -18,14 +22,16 @@ export async function GET(request: NextRequest, ctx: RouteContext) {
     const { id } = await ctx.params;
     const viewerUserId = await getOptionalSessionUserId(request);
 
-    const analysisRepository = new PrismaAnalysisRepository(prisma);
-    const analysisImageRepository = new PrismaAnalysisImageRepository(prisma);
-    const getAnalysisById = makeGetAnalysisById({
-      analysisRepository,
-      analysisImageRepository,
+    const getAnalysisDetail = makeGetAnalysisDetail({
+      analysisRepository: new PrismaAnalysisRepository(prisma),
+      analysisImageRepository: new PrismaAnalysisImageRepository(prisma),
+      analysisCommentRepository: new PrismaAnalysisCommentRepository(prisma),
+      analysisFeedbackRepository: new PrismaAnalysisFeedbackRepository(prisma),
+      analysisResultRepository: new PrismaAnalysisResultRepository(prisma),
+      userRepository: new PrismaUserRepository(prisma),
     });
 
-    const dto = await getAnalysisById({ id, viewerUserId });
+    const dto = await getAnalysisDetail({ id, viewerUserId });
     return NextResponse.json(dto, { status: 200 });
   } catch (error) {
     return errorToResponse(error);
