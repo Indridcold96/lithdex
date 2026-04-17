@@ -8,14 +8,15 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  nickname  String   @unique
-  email     String   @unique
-  avatarUrl String?
-  bio       String?
-  role      String   @default("user")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  nickname     String   @unique
+  email        String   @unique
+  passwordHash String?
+  avatarUrl    String?
+  bio          String?
+  role         String   @default("user")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   analyses Analysis[]
   comments AnalysisComment[]

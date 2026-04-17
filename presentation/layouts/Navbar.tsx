@@ -31,6 +31,20 @@ export function Navbar() {
               render={<Link href={link.href}>{link.label}</Link>}
             />
           ))}
+          <div className="ml-2 flex items-center gap-1 border-l border-border pl-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              nativeButton={false}
+              render={<Link href="/login">Sign in</Link>}
+            />
+            <Button
+              variant="default"
+              size="sm"
+              nativeButton={false}
+              render={<Link href="/register">Sign up</Link>}
+            />
+          </div>
         </nav>
       </div>
     </header>
