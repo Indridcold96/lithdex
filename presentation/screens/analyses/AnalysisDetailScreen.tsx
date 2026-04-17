@@ -10,6 +10,7 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisCommentRepository } from "@/infrastructure/database/repositories/PrismaAnalysisCommentRepository";
 import { PrismaAnalysisFeedbackRepository } from "@/infrastructure/database/repositories/PrismaAnalysisFeedbackRepository";
 import { PrismaAnalysisImageRepository } from "@/infrastructure/database/repositories/PrismaAnalysisImageRepository";
+import { PrismaAnalysisInteractionRepository } from "@/infrastructure/database/repositories/PrismaAnalysisInteractionRepository";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
 import { PrismaAnalysisResultRepository } from "@/infrastructure/database/repositories/PrismaAnalysisResultRepository";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
@@ -21,9 +22,13 @@ import {
   CardTitle,
 } from "@/presentation/ui/card";
 
+import { Button } from "@/presentation/ui/button";
+
 import { AnalysisFeedbackActions } from "./AnalysisFeedbackActions";
 import { AnalysisGallery } from "./AnalysisGallery";
 import { AnalysisCommentsBlock } from "./AnalysisCommentsBlock";
+import { AnalysisPublicInteractions } from "./AnalysisPublicInteractions";
+import { AnalysisStatusBadge } from "./AnalysisStatusBadge";
 
 interface AnalysisDetailScreenProps {
   id: string;
@@ -44,6 +49,9 @@ async function loadDetail(
     analysisCommentRepository: new PrismaAnalysisCommentRepository(prisma),
     analysisFeedbackRepository: new PrismaAnalysisFeedbackRepository(prisma),
     analysisResultRepository: new PrismaAnalysisResultRepository(prisma),
+    analysisInteractionRepository: new PrismaAnalysisInteractionRepository(
+      prisma
+    ),
     userRepository: new PrismaUserRepository(prisma),
   });
 
@@ -87,6 +95,20 @@ function DetailBody({ detail, viewerUserId }: DetailContext) {
 
       {detail.result ? <ResultBlock detail={detail} /> : null}
 
+      {detail.interactions.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>How this analysis unfolded</CardTitle>
+            <CardDescription>
+              A structured summary of the guided identification flow.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AnalysisPublicInteractions interactions={detail.interactions} />
+          </CardContent>
+        </Card>
+      ) : null}
+
       <FeedbackBlock
         analysisId={detail.id}
         isPublic={isPublic}
@@ -121,6 +143,7 @@ function DetailHeader({
     <header className="flex flex-col gap-3 border-b border-border pb-6">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <VisibilityBadge isPublic={isPublic} />
+        <AnalysisStatusBadge status={detail.status} />
         {isOwner ? (
           <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium">
             You own this
@@ -129,6 +152,20 @@ function DetailHeader({
         <span>•</span>
         <span>Created {createdLabel}</span>
       </div>
+
+      {isOwner ? (
+        <div>
+          <Button
+            size="sm"
+            nativeButton={false}
+            render={
+              <Link href={`/analyses/${detail.id}/session`}>
+                Open analysis session →
+              </Link>
+            }
+          />
+        </div>
+      ) : null}
 
       <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
         {title}

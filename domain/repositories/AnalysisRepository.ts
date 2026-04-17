@@ -32,5 +32,6 @@ export interface AnalysisRepository {
     id: string,
     visibility: AnalysisVisibility
   ): Promise<Analysis>;
+  updateStatus(id: string, status: AnalysisStatus): Promise<Analysis>;
   deleteById(id: string): Promise<void>;
 }

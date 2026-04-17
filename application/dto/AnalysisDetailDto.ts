@@ -2,6 +2,7 @@ import type { AnalysisFeedbackType } from "@/domain/enums/AnalysisFeedbackType";
 
 import type { AnalysisCommentDto } from "./AnalysisCommentDto";
 import type { AnalysisDto } from "./AnalysisDto";
+import type { AnalysisInteractionDto } from "./AnalysisInteractionDto";
 import type { AnalysisResultDto } from "./AnalysisResultDto";
 import type { PublicUserDto } from "./AuthenticatedUserDto";
 
@@ -16,4 +17,6 @@ export interface AnalysisDetailDto extends AnalysisDto {
   comments: AnalysisCommentDto[];
   feedbackSummary: AnalysisFeedbackSummaryDto;
   viewerFeedback: AnalysisFeedbackType | null;
+  // Only meaningful, user-facing interactions (no system noise, no raw uploads).
+  interactions: AnalysisInteractionDto[];
 }

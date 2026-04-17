@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import {
+  AIProviderError,
+  ConflictError,
   DuplicateError,
   ForbiddenError,
   InvalidCredentialsError,
@@ -38,6 +40,14 @@ export function errorToResponse(error: unknown) {
   }
   if (error instanceof ForbiddenError) {
     return NextResponse.json({ error: error.message }, { status: 403 });
+  }
+  if (error instanceof ConflictError) {
+    return NextResponse.json({ error: error.message }, { status: 409 });
+  }
+  if (error instanceof AIProviderError) {
+    // Do not leak raw provider payloads; `message` is already sanitized by the
+    // provider wrapper before being surfaced as this error type.
+    return NextResponse.json({ error: error.message }, { status: 502 });
   }
 
   console.error("Unexpected API error", error);

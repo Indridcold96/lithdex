@@ -69,6 +69,14 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
     return rows.map(toDomain);
   }
 
+  async updateStatus(id: string, status: AnalysisStatus): Promise<Analysis> {
+    const row = await this.prisma.analysis.update({
+      where: { id },
+      data: { status },
+    });
+    return toDomain(row);
+  }
+
   async updateVisibility(
     id: string,
     visibility: AnalysisVisibility

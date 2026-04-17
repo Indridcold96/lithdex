@@ -99,7 +99,7 @@ export function makeCreateAnalysisWithUploads(
     const analysis = await deps.analysisRepository.createShell({
       userId: input.userId,
       title,
-      status: AnalysisStatus.SUBMITTED,
+      status: AnalysisStatus.DRAFT,
       visibility,
       publishedAt,
     });

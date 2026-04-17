@@ -25,3 +25,11 @@ export class InvalidCredentialsError extends ApplicationError {
 export class ForbiddenError extends ApplicationError {
   override name = "ForbiddenError";
 }
+
+export class ConflictError extends ApplicationError {
+  override name = "ConflictError";
+}
+
+export class AIProviderError extends ApplicationError {
+  override name = "AIProviderError";
+}
