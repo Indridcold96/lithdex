@@ -25,7 +25,22 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async create(data: CreateAnalysisData): Promise<Analysis> {
-    const row = await this.prisma.analysis.create({ data });
+    const { images, ...rest } = data;
+
+    const row = await this.prisma.analysis.create({
+      data: {
+        ...rest,
+        images: {
+          create: images.map((image) => ({
+            storageKey: image.storageKey,
+            originalFilename: image.originalFilename,
+            mimeType: image.mimeType,
+            sortOrder: image.sortOrder,
+          })),
+        },
+      },
+    });
+
     return toDomain(row);
   }
 

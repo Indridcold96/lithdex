@@ -1,6 +1,13 @@
 import type { Analysis } from "../entities/Analysis";
-import type { AnalysisVisibility } from "../enums/AnalysisVisibility";
 import type { AnalysisStatus } from "../enums/AnalysisStatus";
+import type { AnalysisVisibility } from "../enums/AnalysisVisibility";
+
+export interface CreateAnalysisImageData {
+  storageKey: string;
+  originalFilename: string | null;
+  mimeType: string | null;
+  sortOrder: number;
+}
 
 export interface CreateAnalysisData {
   userId: string | null;
@@ -8,6 +15,7 @@ export interface CreateAnalysisData {
   status: AnalysisStatus;
   visibility: AnalysisVisibility;
   publishedAt: Date | null;
+  images: CreateAnalysisImageData[];
 }
 
 export interface ListPublicAnalysesOptions {
