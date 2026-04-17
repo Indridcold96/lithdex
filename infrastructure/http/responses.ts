@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 
 import {
   DuplicateError,
+  ForbiddenError,
   InvalidCredentialsError,
   NotFoundError,
   UnauthenticatedError,
@@ -34,6 +35,9 @@ export function errorToResponse(error: unknown) {
     error instanceof InvalidCredentialsError
   ) {
     return NextResponse.json({ error: error.message }, { status: 401 });
+  }
+  if (error instanceof ForbiddenError) {
+    return NextResponse.json({ error: error.message }, { status: 403 });
   }
 
   console.error("Unexpected API error", error);

@@ -21,3 +21,7 @@ export class UnauthenticatedError extends ApplicationError {
 export class InvalidCredentialsError extends ApplicationError {
   override name = "InvalidCredentialsError";
 }
+
+export class ForbiddenError extends ApplicationError {
+  override name = "ForbiddenError";
+}

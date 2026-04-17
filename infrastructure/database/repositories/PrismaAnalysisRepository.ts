@@ -5,8 +5,9 @@ import type { AnalysisStatus } from "@/domain/enums/AnalysisStatus";
 import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
 import type {
   AnalysisRepository,
-  CreateAnalysisData,
+  CreateAnalysisShellData,
   ListPublicAnalysesOptions,
+  ListUserAnalysesOptions,
 } from "@/domain/repositories/AnalysisRepository";
 
 type PrismaAnalysisRow = Awaited<
@@ -24,23 +25,8 @@ function toDomain(row: PrismaAnalysisRow): Analysis {
 export class PrismaAnalysisRepository implements AnalysisRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async create(data: CreateAnalysisData): Promise<Analysis> {
-    const { images, ...rest } = data;
-
-    const row = await this.prisma.analysis.create({
-      data: {
-        ...rest,
-        images: {
-          create: images.map((image) => ({
-            storageKey: image.storageKey,
-            originalFilename: image.originalFilename,
-            mimeType: image.mimeType,
-            sortOrder: image.sortOrder,
-          })),
-        },
-      },
-    });
-
+  async createShell(data: CreateAnalysisShellData): Promise<Analysis> {
+    const row = await this.prisma.analysis.create({ data });
     return toDomain(row);
   }
 
@@ -67,11 +53,27 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
     return rows.map(toDomain);
   }
 
+  async listByUserId(
+    userId: string,
+    options: ListUserAnalysesOptions = {}
+  ): Promise<Analysis[]> {
+    const { limit, cursor } = options;
+
+    const rows = await this.prisma.analysis.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      ...(typeof limit === "number" ? { take: limit } : {}),
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+
+    return rows.map(toDomain);
+  }
+
   async updateVisibility(
     id: string,
     visibility: AnalysisVisibility
   ): Promise<Analysis> {
-    const row = await this.prisma.$transaction(async (tx: any) => {
+    const row = await this.prisma.$transaction(async (tx) => {
       const existing = await tx.analysis.findUniqueOrThrow({ where: { id } });
 
       const shouldPublishNow =
@@ -88,5 +90,9 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
     });
 
     return toDomain(row);
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await this.prisma.analysis.delete({ where: { id } });
   }
 }

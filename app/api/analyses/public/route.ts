@@ -3,9 +3,12 @@ import { z } from "zod";
 
 import { makeListPublicAnalyses } from "@/application/use-cases/list-public-analyses";
 import { prisma } from "@/infrastructure/database/prisma";
+import { PrismaAnalysisImageRepository } from "@/infrastructure/database/repositories/PrismaAnalysisImageRepository";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
 import { parseQuery } from "@/infrastructure/http/request";
 import { errorToResponse } from "@/infrastructure/http/responses";
+
+export const runtime = "nodejs";
 
 const ListPublicAnalysesQuerySchema = z.object({
   limit: z.coerce.number().int().positive().optional(),
@@ -20,10 +23,14 @@ export async function GET(request: NextRequest) {
     );
 
     const analysisRepository = new PrismaAnalysisRepository(prisma);
-    const listPublicAnalyses = makeListPublicAnalyses({ analysisRepository });
+    const analysisImageRepository = new PrismaAnalysisImageRepository(prisma);
+    const listPublicAnalyses = makeListPublicAnalyses({
+      analysisRepository,
+      analysisImageRepository,
+    });
 
-    const analyses = await listPublicAnalyses({ limit, cursor });
-    return NextResponse.json(analyses, { status: 200 });
+    const dtos = await listPublicAnalyses({ limit, cursor });
+    return NextResponse.json(dtos, { status: 200 });
   } catch (error) {
     return errorToResponse(error);
   }

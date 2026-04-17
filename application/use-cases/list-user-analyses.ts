@@ -1,23 +1,29 @@
 import type { AnalysisImageRepository } from "@/domain/repositories/AnalysisImageRepository";
 import type {
   AnalysisRepository,
-  ListPublicAnalysesOptions,
+  ListUserAnalysesOptions,
 } from "@/domain/repositories/AnalysisRepository";
 
 import { toAnalysisDto, type AnalysisDto } from "../dto/AnalysisDto";
 
-export type ListPublicAnalysesInput = ListPublicAnalysesOptions;
+export interface ListUserAnalysesInput extends ListUserAnalysesOptions {
+  userId: string;
+}
 
-export interface ListPublicAnalysesDeps {
+export interface ListUserAnalysesDeps {
   analysisRepository: AnalysisRepository;
   analysisImageRepository: AnalysisImageRepository;
 }
 
-export function makeListPublicAnalyses(deps: ListPublicAnalysesDeps) {
-  return async function listPublicAnalyses(
-    input: ListPublicAnalysesInput = {}
+export function makeListUserAnalyses(deps: ListUserAnalysesDeps) {
+  return async function listUserAnalyses(
+    input: ListUserAnalysesInput
   ): Promise<AnalysisDto[]> {
-    const analyses = await deps.analysisRepository.listPublic(input);
+    const { userId, ...options } = input;
+    const analyses = await deps.analysisRepository.listByUserId(
+      userId,
+      options
+    );
 
     return Promise.all(
       analyses.map(async (analysis) => {
@@ -30,4 +36,4 @@ export function makeListPublicAnalyses(deps: ListPublicAnalysesDeps) {
   };
 }
 
-export type ListPublicAnalyses = ReturnType<typeof makeListPublicAnalyses>;
+export type ListUserAnalyses = ReturnType<typeof makeListUserAnalyses>;
