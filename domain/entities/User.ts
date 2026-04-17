@@ -2,7 +2,7 @@ export interface User {
   id: string;
   nickname: string;
   email: string;
-  passwordHash: string | null;
+  passwordHash: string;
   avatarUrl: string | null;
   bio: string | null;
   role: string;

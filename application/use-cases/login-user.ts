@@ -19,7 +19,7 @@ export function makeLoginUser(deps: LoginUserDeps) {
     const email = input.email.trim().toLowerCase();
 
     const user = await deps.userRepository.findByEmail(email);
-    if (!user || !user.passwordHash) {
+    if (!user) {
       throw new InvalidCredentialsError("Invalid email or password.");
     }
 

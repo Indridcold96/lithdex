@@ -11,7 +11,7 @@ model User {
   id           String   @id @default(cuid())
   nickname     String   @unique
   email        String   @unique
-  passwordHash String?
+  passwordHash String
   avatarUrl    String?
   bio          String?
   role         String   @default("user")
