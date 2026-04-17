@@ -10,7 +10,7 @@ import { parseBody } from "@/infrastructure/http/request";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
 const AddAnalysisFeedbackSchema = z.object({
-  userId: z.string().min(1),
+  userId: z.cuid(),
   type: z.enum([AnalysisFeedbackType.CONFIRM, AnalysisFeedbackType.DISPUTE]),
 });
 

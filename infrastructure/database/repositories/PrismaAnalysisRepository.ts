@@ -55,7 +55,10 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
     const { limit, cursor } = options;
 
     const rows = await this.prisma.analysis.findMany({
-      where: { visibility: AnalysisVisibility.PUBLIC },
+      where: {
+        visibility: AnalysisVisibility.PUBLIC,
+        publishedAt: { not: null },
+      },
       orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
       ...(typeof limit === "number" ? { take: limit } : {}),
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),

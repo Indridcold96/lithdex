@@ -12,11 +12,11 @@ const CreateAnalysisImageSchema = z.object({
   storageKey: z.string().min(1),
   originalFilename: z.string().nullish(),
   mimeType: z.string().nullish(),
-  sortOrder: z.number().finite().optional(),
+  sortOrder: z.number().int().nonnegative().optional(),
 });
 
 const CreateAnalysisSchema = z.object({
-  userId: z.string().nullish(),
+  userId: z.cuid().nullish(),
   title: z.string().nullish(),
   visibility: z
     .enum([AnalysisVisibility.PUBLIC, AnalysisVisibility.PRIVATE])

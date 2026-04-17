@@ -9,7 +9,7 @@ import { parseBody } from "@/infrastructure/http/request";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
 const AddAnalysisCommentSchema = z.object({
-  userId: z.string().min(1),
+  userId: z.cuid(),
   content: z.string(),
 });
 
