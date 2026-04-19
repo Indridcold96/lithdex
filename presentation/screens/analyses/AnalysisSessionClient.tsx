@@ -1,17 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
 import { Loader2, Play, RefreshCw } from "lucide-react";
 
 import type { AnalysisImageDto } from "@/application/dto/AnalysisDto";
 import type { AnalysisInteractionDto } from "@/application/dto/AnalysisInteractionDto";
 import type { AnalysisResultDto } from "@/application/dto/AnalysisResultDto";
-import type { AnalysisRunOutcomeDto } from "@/application/dto/AnalysisRunOutcomeDto";
 import type { AnalysisSessionDto } from "@/application/dto/AnalysisSessionDto";
 import { AnalysisInteractionType } from "@/domain/enums/AnalysisInteractionType";
-import { AnalysisStatus, isTerminalStatus } from "@/domain/enums/AnalysisStatus";
+import { AnalysisStatus } from "@/domain/enums/AnalysisStatus";
+import { useAnalysisSessionFlow } from "@/presentation/hooks/useAnalysisSessionFlow";
 import { Alert, AlertDescription } from "@/presentation/ui/alert";
 import { Button } from "@/presentation/ui/button";
 import {
@@ -90,13 +89,10 @@ function findLatestInteractionOfType(
 export function AnalysisSessionClient({
   initialSession,
 }: AnalysisSessionClientProps) {
-  const router = useRouter();
-  const [session, setSession] = useState<AnalysisSessionDto>(initialSession);
-  const [running, setRunning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { session, running, error, run, refetchSession } =
+    useAnalysisSessionFlow(initialSession);
 
   const { images, interactions, status, result } = session;
-  const isTerminal = isTerminalStatus(status);
 
   const latestQuestionInteraction = useMemo(
     () =>
@@ -124,63 +120,6 @@ export function AnalysisSessionClient({
       ? extractRequestedImageTypes(latestFollowupRequest)
       : [];
 
-  async function handleRun() {
-    setRunning(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/analyses/${session.id}/run`, {
-        method: "POST",
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        throw new Error(body?.error ?? "Analysis failed to run.");
-      }
-      // We have the outcome in the response, but we re-fetch the full session
-      // to pull the latest interactions in their canonical order.
-      const outcome = (await res.json()) as AnalysisRunOutcomeDto;
-      void outcome;
-      router.refresh();
-      await refetchSession();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unexpected error.");
-    } finally {
-      setRunning(false);
-    }
-  }
-
-  async function refetchSession() {
-    try {
-      const res = await fetch(`/api/analyses/${session.id}`, {
-        cache: "no-store",
-      });
-      if (res.ok) {
-        // The detail endpoint is visibility-filtered; for owner-only session
-        // data we still use it because the owner always gets the full result
-        // and filtered interactions. We re-read status + result from it.
-        const detail = (await res.json()) as {
-          id: string;
-          status: AnalysisStatus;
-          result: AnalysisResultDto | null;
-          interactions: AnalysisInteractionDto[];
-          images: AnalysisImageDto[];
-        };
-        setSession((prev) => ({
-          ...prev,
-          status: detail.status,
-          result: detail.result,
-          // `interactions` on the detail DTO is already filtered; merge with
-          // any prior interactions we already have to keep history complete.
-          interactions: mergeInteractions(prev.interactions, detail.interactions),
-          images: detail.images,
-        }));
-      }
-    } catch {
-      // Non-fatal; router.refresh() already re-renders the page.
-    }
-  }
-
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-12">
       <SessionHeader session={session} />
@@ -198,7 +137,6 @@ export function AnalysisSessionClient({
         pendingImageRequests={pendingImageRequests}
         onUploaded={async () => {
           await refetchSession();
-          router.refresh();
         }}
       />
 
@@ -210,7 +148,6 @@ export function AnalysisSessionClient({
           questions={pendingQuestions}
           onAnswered={async () => {
             await refetchSession();
-            router.refresh();
           }}
         />
       ) : null}
@@ -224,25 +161,11 @@ export function AnalysisSessionClient({
       <RunBlock
         status={status}
         running={running}
-        isTerminal={isTerminal}
-        onRun={handleRun}
+        onRun={run}
       />
 
       <HistorySection interactions={interactions} />
     </div>
-  );
-}
-
-function mergeInteractions(
-  prior: AnalysisInteractionDto[],
-  next: AnalysisInteractionDto[]
-): AnalysisInteractionDto[] {
-  const byId = new Map<string, AnalysisInteractionDto>();
-  for (const item of prior) byId.set(item.id, item);
-  for (const item of next) byId.set(item.id, item);
-  return Array.from(byId.values()).sort(
-    (a, b) =>
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
 }
 
@@ -337,44 +260,28 @@ function FailedCard({ session }: { session: AnalysisSessionDto }) {
 function RunBlock({
   status,
   running,
-  isTerminal,
   onRun,
 }: {
   status: AnalysisStatus;
   running: boolean;
-  isTerminal: boolean;
   onRun: () => void;
 }) {
-  if (status === AnalysisStatus.COMPLETED) return null;
+  if (status !== AnalysisStatus.NEEDS_INPUT && status !== AnalysisStatus.FAILED) {
+    return null;
+  }
 
   const label =
-    status === AnalysisStatus.DRAFT
-      ? "Start analysis"
-      : status === AnalysisStatus.NEEDS_INPUT
-        ? "Continue analysis"
-        : status === AnalysisStatus.FAILED
-          ? "Retry analysis"
-          : "Run analysis";
-
-  const disabled =
-    running || status === AnalysisStatus.PROCESSING || isTerminalBlock(status);
-
-  function isTerminalBlock(s: AnalysisStatus) {
-    return s === AnalysisStatus.COMPLETED;
-  }
-  void isTerminal;
+    status === AnalysisStatus.NEEDS_INPUT
+      ? "Continue analysis"
+      : "Retry analysis";
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-background/50 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-1">
         <p className="text-sm font-medium">
-          {status === AnalysisStatus.DRAFT
-            ? "Ready to analyze?"
-            : status === AnalysisStatus.NEEDS_INPUT
-              ? "Once you've addressed the follow-up, continue the analysis."
-              : status === AnalysisStatus.FAILED
-                ? "You can retry the analysis."
-                : "The analysis is running."}
+          {status === AnalysisStatus.NEEDS_INPUT
+            ? "Once you've addressed the follow-up, continue the analysis."
+            : "You can retry the analysis."}
         </p>
         <p className="text-xs text-muted-foreground">
           Analysis runs synchronously and will return one of: final result,
@@ -384,11 +291,11 @@ function RunBlock({
       <Button
         type="button"
         size="sm"
-        disabled={disabled}
+        disabled={running}
         onClick={onRun}
         className="gap-2"
       >
-        {running || status === AnalysisStatus.PROCESSING ? (
+        {running ? (
           <Loader2 aria-hidden className="size-4 animate-spin" />
         ) : status === AnalysisStatus.FAILED ? (
           <RefreshCw aria-hidden className="size-4" />

@@ -1,5 +1,6 @@
 import type { Analysis } from "@/domain/entities/Analysis";
 import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
+import { shouldPublishAnalysis } from "@/domain/rules/analysis";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 
 import { ValidationError } from "../errors";
@@ -27,10 +28,16 @@ export function makeSetAnalysisVisibility(deps: SetAnalysisVisibilityDeps) {
       );
     }
 
-    return deps.analysisRepository.updateVisibility(
+    const analysis = await deps.analysisRepository.updateVisibility(
       input.analysisId,
       input.visibility
     );
+
+    if (!shouldPublishAnalysis(analysis)) {
+      return analysis;
+    }
+
+    return deps.analysisRepository.setPublishedAt(analysis.id, new Date());
   };
 }
 

@@ -8,7 +8,6 @@ interface AnalysisStatusBadgeProps {
 }
 
 const STATUS_LABEL: Record<AnalysisStatus, string> = {
-  [Status.DRAFT]: "Draft",
   [Status.PROCESSING]: "Analyzing",
   [Status.NEEDS_INPUT]: "Needs input",
   [Status.COMPLETED]: "Completed",
@@ -16,7 +15,6 @@ const STATUS_LABEL: Record<AnalysisStatus, string> = {
 };
 
 const STATUS_CLASSES: Record<AnalysisStatus, string> = {
-  [Status.DRAFT]: "bg-muted text-muted-foreground",
   [Status.PROCESSING]: "bg-amber-500/15 text-amber-700 dark:text-amber-300",
   [Status.NEEDS_INPUT]: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
   [Status.COMPLETED]:

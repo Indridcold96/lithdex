@@ -26,3 +26,15 @@ export function canRequestFollowUp(
 ): boolean {
   return !isAnalysisFinalized(status);
 }
+
+export function shouldPublishAnalysis(input: {
+  visibility: AnalysisVisibility | string;
+  status: AnalysisStatus | string;
+  publishedAt: Date | null;
+}): boolean {
+  return (
+    input.visibility === AnalysisVisibility.PUBLIC &&
+    input.status === AnalysisStatus.COMPLETED &&
+    input.publishedAt === null
+  );
+}

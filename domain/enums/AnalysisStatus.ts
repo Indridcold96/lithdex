@@ -1,7 +1,6 @@
 // A small, intentional set of statuses for the guided analysis flow.
 // Do not introduce new values without updating the use cases that enforce them.
 export const AnalysisStatus = {
-  DRAFT: "draft",
   PROCESSING: "processing",
   NEEDS_INPUT: "needs_input",
   COMPLETED: "completed",
@@ -17,7 +16,6 @@ export function isTerminalStatus(status: AnalysisStatus | string): boolean {
 
 export function canStartOrContinue(status: AnalysisStatus | string): boolean {
   return (
-    status === AnalysisStatus.DRAFT ||
     status === AnalysisStatus.NEEDS_INPUT ||
     status === AnalysisStatus.FAILED
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent, type SubmitEvent } from "react";
 
 import { Alert, AlertDescription } from "@/presentation/ui/alert";
@@ -15,19 +16,8 @@ import { Input } from "@/presentation/ui/input";
 import { Label } from "@/presentation/ui/label";
 import { PageHeader } from "@/presentation/components/PageHeader";
 
-interface AnalysisImageResponse {
-  id: string;
-  url: string;
-  sortOrder: number;
-  mimeType: string | null;
-  originalFilename: string | null;
-}
-
 interface AnalysisResponse {
   id: string;
-  title: string | null;
-  visibility: "public" | "private";
-  images: AnalysisImageResponse[];
 }
 
 const MIN_FILES = 3;
@@ -35,12 +25,12 @@ const MAX_FILES = 12;
 const ALLOWED_MIMES = ["image/jpeg", "image/png", "image/webp"];
 
 export function NewAnalysisScreen() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [visibility, setVisibility] = useState<"public" | "private">("public");
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<AnalysisResponse | null>(null);
 
   function handleFilesChange(event: ChangeEvent<HTMLInputElement>) {
     const picked = event.target.files ? Array.from(event.target.files) : [];
@@ -50,7 +40,6 @@ export function NewAnalysisScreen() {
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    setResult(null);
 
     if (files.length < MIN_FILES) {
       setError(`Please select at least ${MIN_FILES} images.`);
@@ -90,9 +79,7 @@ export function NewAnalysisScreen() {
       }
 
       const data = (await res.json()) as AnalysisResponse;
-      setResult(data);
-      setFiles([]);
-      setTitle("");
+      router.replace(`/analyses/${data.id}/session`);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -171,31 +158,6 @@ export function NewAnalysisScreen() {
           </form>
         </CardContent>
       </Card>
-
-      {result ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Analysis created</CardTitle>
-            <CardDescription>
-              ID: {result.id} &middot; visibility: {result.visibility}
-              {result.title ? ` \u00b7 title: ${result.title}` : ""}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              {result.images.map((image) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={image.id}
-                  src={image.url}
-                  alt={image.originalFilename ?? `Image ${image.sortOrder + 1}`}
-                  className="aspect-square w-full rounded-lg border border-border object-cover"
-                />
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }

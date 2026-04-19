@@ -17,6 +17,7 @@ import type { AnalysisImageRepository } from "@/domain/repositories/AnalysisImag
 import type { AnalysisInteractionRepository } from "@/domain/repositories/AnalysisInteractionRepository";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 import type { AnalysisResultRepository } from "@/domain/repositories/AnalysisResultRepository";
+import { shouldPublishAnalysis } from "@/domain/rules/analysis";
 import type { FileStorage } from "@/domain/storage/FileStorage";
 
 import { toAnalysisInteractionDto } from "../dto/AnalysisInteractionDto";
@@ -34,6 +35,7 @@ import { MIN_ANALYSIS_IMAGES } from "../config/uploads";
 export interface RunAnalysisPassInput {
   analysisId: string;
   requesterUserId: string;
+  assumeAlreadyProcessing?: boolean;
 }
 
 export interface RunAnalysisPassDeps {
@@ -58,6 +60,22 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
   return async function runAnalysisPass(
     input: RunAnalysisPassInput
   ): Promise<AnalysisRunOutcomeDto> {
+    async function persistStatus(
+      analysisId: string,
+      status: AnalysisStatus
+    ): Promise<void> {
+      const updated = await deps.analysisRepository.updateStatus(
+        analysisId,
+        status
+      );
+
+      if (!shouldPublishAnalysis(updated)) {
+        return;
+      }
+
+      await deps.analysisRepository.setPublishedAt(updated.id, new Date());
+    }
+
     const analysis = await deps.analysisRepository.findById(input.analysisId);
     if (!analysis) {
       throw new NotFoundError(`Analysis not found: ${input.analysisId}`);
@@ -67,7 +85,14 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
         "Only the owner can run synchronous analysis on this analysis."
       );
     }
-    if (!canStartOrContinue(analysis.status)) {
+    const canUseExistingProcessingState =
+      input.assumeAlreadyProcessing === true &&
+      analysis.status === AnalysisStatus.PROCESSING;
+
+    if (
+      !canStartOrContinue(analysis.status) &&
+      !canUseExistingProcessingState
+    ) {
       throw new ConflictError(
         `Analysis is ${analysis.status} and cannot be (re)started.`
       );
@@ -85,10 +110,9 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
     // Flip status to PROCESSING before calling the provider so concurrent
     // requests observe the in-flight state. On any later failure we set FAILED
     // and record a system_status interaction.
-    await deps.analysisRepository.updateStatus(
-      analysis.id,
-      AnalysisStatus.PROCESSING
-    );
+    if (!canUseExistingProcessingState) {
+      await persistStatus(analysis.id, AnalysisStatus.PROCESSING);
+    }
 
     let response: AIAnalysisResponse;
     try {
@@ -120,10 +144,7 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
         content: "provider_error",
         metadataJson: { event: "provider_error", detail: message },
       });
-      await deps.analysisRepository.updateStatus(
-        analysis.id,
-        AnalysisStatus.FAILED
-      );
+      await persistStatus(analysis.id, AnalysisStatus.FAILED);
       throw error instanceof AIProviderError
         ? error
         : new AIProviderError(message);
@@ -164,10 +185,7 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
           },
         });
 
-        await deps.analysisRepository.updateStatus(
-          analysis.id,
-          AnalysisStatus.COMPLETED
-        );
+        await persistStatus(analysis.id, AnalysisStatus.COMPLETED);
 
         return {
           analysisId: analysis.id,
@@ -190,10 +208,7 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
           },
         });
 
-        await deps.analysisRepository.updateStatus(
-          analysis.id,
-          AnalysisStatus.NEEDS_INPUT
-        );
+        await persistStatus(analysis.id, AnalysisStatus.NEEDS_INPUT);
 
         return {
           analysisId: analysis.id,
@@ -216,10 +231,7 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
           },
         });
 
-        await deps.analysisRepository.updateStatus(
-          analysis.id,
-          AnalysisStatus.NEEDS_INPUT
-        );
+        await persistStatus(analysis.id, AnalysisStatus.NEEDS_INPUT);
 
         return {
           analysisId: analysis.id,
@@ -243,10 +255,7 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
           },
         });
 
-        await deps.analysisRepository.updateStatus(
-          analysis.id,
-          AnalysisStatus.FAILED
-        );
+        await persistStatus(analysis.id, AnalysisStatus.FAILED);
 
         return {
           analysisId: analysis.id,

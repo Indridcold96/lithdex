@@ -93,15 +93,13 @@ export function makeCreateAnalysisWithUploads(
     const allowedMimes = validateFiles(input.files);
 
     const title = input.title?.trim() ? input.title.trim() : null;
-    const publishedAt =
-      visibility === AnalysisVisibility.PUBLIC ? new Date() : null;
 
     const analysis = await deps.analysisRepository.createShell({
       userId: input.userId,
       title,
-      status: AnalysisStatus.DRAFT,
+      status: AnalysisStatus.PROCESSING,
       visibility,
-      publishedAt,
+      publishedAt: null,
     });
 
     const uploadedKeys: string[] = [];

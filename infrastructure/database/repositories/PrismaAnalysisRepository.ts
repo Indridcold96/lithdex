@@ -1,7 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 
 import type { Analysis } from "@/domain/entities/Analysis";
-import type { AnalysisStatus } from "@/domain/enums/AnalysisStatus";
+import { AnalysisStatus } from "@/domain/enums/AnalysisStatus";
 import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
 import type {
   AnalysisRepository,
@@ -43,6 +43,7 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
     const rows = await this.prisma.analysis.findMany({
       where: {
         visibility: AnalysisVisibility.PUBLIC,
+        status: AnalysisStatus.COMPLETED,
         publishedAt: { not: null },
       },
       orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
@@ -77,24 +78,21 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
     return toDomain(row);
   }
 
+  async setPublishedAt(id: string, publishedAt: Date | null): Promise<Analysis> {
+    const row = await this.prisma.analysis.update({
+      where: { id },
+      data: { publishedAt },
+    });
+    return toDomain(row);
+  }
+
   async updateVisibility(
     id: string,
     visibility: AnalysisVisibility
   ): Promise<Analysis> {
-    const row = await this.prisma.$transaction(async (tx) => {
-      const existing = await tx.analysis.findUniqueOrThrow({ where: { id } });
-
-      const shouldPublishNow =
-        visibility === AnalysisVisibility.PUBLIC &&
-        existing.publishedAt === null;
-
-      return tx.analysis.update({
-        where: { id },
-        data: {
-          visibility,
-          ...(shouldPublishNow ? { publishedAt: new Date() } : {}),
-        },
-      });
+    const row = await this.prisma.analysis.update({
+      where: { id },
+      data: { visibility },
     });
 
     return toDomain(row);
