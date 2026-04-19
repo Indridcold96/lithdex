@@ -69,6 +69,43 @@ export function useAnalysisSessionFlow(initialSession: AnalysisSessionDto) {
     }
   }
 
+  async function continueAnalysis(input: {
+    answers: { questionId: string; answer: string }[];
+    files: File[];
+  }) {
+    setRunning(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append("answers", JSON.stringify(input.answers));
+      for (const file of input.files) {
+        formData.append("files", file);
+      }
+
+      const res = await fetch(`/api/analyses/${session.id}/followup/continue`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(body?.error ?? "Could not continue the analysis.");
+      }
+
+      const outcome = (await res.json()) as AnalysisRunOutcomeDto;
+      void outcome;
+      await refetchSession();
+    } catch (err) {
+      const nextError =
+        err instanceof Error ? err : new Error("Unexpected error.");
+      setError(nextError.message);
+      throw nextError;
+    } finally {
+      setRunning(false);
+    }
+  }
+
   const autoStartRun = useEffectEvent(() => {
     void run();
   });
@@ -93,6 +130,7 @@ export function useAnalysisSessionFlow(initialSession: AnalysisSessionDto) {
     running,
     error,
     run,
+    continueAnalysis,
     refetchSession,
   };
 }

@@ -56,6 +56,220 @@ export interface RunAnalysisPassDeps {
   >;
 }
 
+const MAX_GUIDED_FOLLOWUP_TURNS = 3;
+
+interface StoredQuestion {
+  id?: string;
+  prompt?: string;
+  intentKey?: string;
+}
+
+function normalizeIntentKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .replace(/_+/g, "_");
+}
+
+function getQuestionIntentKey(question: StoredQuestion): string {
+  if (typeof question.intentKey === "string" && question.intentKey.length > 0) {
+    return normalizeIntentKey(question.intentKey);
+  }
+  if (typeof question.prompt === "string" && question.prompt.length > 0) {
+    return normalizeIntentKey(question.prompt);
+  }
+  return "";
+}
+
+function extractStoredQuestions(metadata: unknown | null): StoredQuestion[] {
+  if (
+    metadata &&
+    typeof metadata === "object" &&
+    "questions" in metadata &&
+    Array.isArray((metadata as { questions: unknown }).questions)
+  ) {
+    return (metadata as { questions: StoredQuestion[] }).questions.filter(
+      (question) => question && typeof question === "object"
+    );
+  }
+  return [];
+}
+
+function extractRequestedImageTypes(metadata: unknown | null): string[] {
+  if (
+    metadata &&
+    typeof metadata === "object" &&
+    "requestedImageTypes" in metadata &&
+    Array.isArray((metadata as { requestedImageTypes: unknown }).requestedImageTypes)
+  ) {
+    return (
+      metadata as { requestedImageTypes: string[] }
+    ).requestedImageTypes.filter(
+      (requestedType) =>
+        typeof requestedType === "string" && requestedType.length > 0
+    );
+  }
+  return [];
+}
+
+function countAssistantFollowupTurns(
+  interactions: Awaited<
+    ReturnType<AnalysisInteractionRepository["listByAnalysisId"]>
+  >
+): number {
+  return interactions.filter(
+    (interaction) =>
+      interaction.interactionType ===
+        AnalysisInteractionType.ASSISTANT_QUESTION ||
+      interaction.interactionType ===
+        AnalysisInteractionType.ASSISTANT_FOLLOWUP_REQUEST
+  ).length;
+}
+
+function collectPriorQuestionIntentKeys(
+  interactions: Awaited<
+    ReturnType<AnalysisInteractionRepository["listByAnalysisId"]>
+  >
+): Set<string> {
+  return new Set(
+    interactions
+      .filter(
+        (interaction) =>
+          interaction.interactionType ===
+          AnalysisInteractionType.ASSISTANT_QUESTION
+      )
+      .flatMap((interaction) => extractStoredQuestions(interaction.metadataJson))
+      .map(getQuestionIntentKey)
+      .filter((intentKey) => intentKey.length > 0)
+  );
+}
+
+function collectPriorImageRequestIntentKeys(
+  interactions: Awaited<
+    ReturnType<AnalysisInteractionRepository["listByAnalysisId"]>
+  >
+): Set<string> {
+  return new Set(
+    interactions
+      .filter(
+        (interaction) =>
+          interaction.interactionType ===
+          AnalysisInteractionType.ASSISTANT_FOLLOWUP_REQUEST
+      )
+      .flatMap((interaction) =>
+        extractRequestedImageTypes(interaction.metadataJson)
+      )
+      .map(normalizeIntentKey)
+      .filter((intentKey) => intentKey.length > 0)
+  );
+}
+
+function makeGuardrailInconclusiveResponse(
+  response: Extract<
+    AIAnalysisResponse,
+    { kind: "needs_images" | "needs_clarification" }
+  >,
+  reason: string,
+  summary: string
+): Extract<AIAnalysisResponse, { kind: "inconclusive" }> {
+  return {
+    kind: "inconclusive",
+    summary,
+    reason,
+    rawProviderOutput: response.rawProviderOutput,
+  };
+}
+
+function applyFollowupGuardrails(
+  response: AIAnalysisResponse,
+  priorInteractions: Awaited<
+    ReturnType<AnalysisInteractionRepository["listByAnalysisId"]>
+  >
+): AIAnalysisResponse {
+  if (response.kind !== "needs_images" && response.kind !== "needs_clarification") {
+    return response;
+  }
+
+  if (countAssistantFollowupTurns(priorInteractions) >= MAX_GUIDED_FOLLOWUP_TURNS) {
+    return makeGuardrailInconclusiveResponse(
+      response,
+      "followup_limit_reached",
+      "The analysis remains inconclusive after the maximum guided follow-up steps."
+    );
+  }
+
+  if (response.kind === "needs_clarification") {
+    const priorIntentKeys = collectPriorQuestionIntentKeys(priorInteractions);
+    const seenIntentKeys = new Set<string>();
+    const filteredQuestions = response.questions.filter((question) => {
+      const intentKey = getQuestionIntentKey(question);
+      if (intentKey.length === 0) {
+        return true;
+      }
+      if (priorIntentKeys.has(intentKey) || seenIntentKeys.has(intentKey)) {
+        return false;
+      }
+      seenIntentKeys.add(intentKey);
+      return true;
+    });
+
+    if (filteredQuestions.length === 0) {
+      return makeGuardrailInconclusiveResponse(
+        response,
+        "duplicate_followup_intent",
+        "The analysis remains inconclusive because additional clarification would repeat earlier questions."
+      );
+    }
+
+    if (filteredQuestions.length !== response.questions.length) {
+      return {
+        ...response,
+        questions: filteredQuestions,
+      };
+    }
+
+    return response;
+  }
+
+  const priorRequestedImageIntentKeys =
+    collectPriorImageRequestIntentKeys(priorInteractions);
+  const seenRequestedImageIntentKeys = new Set<string>();
+  const filteredImageTypes = response.requestedImageTypes.filter(
+    (requestedImageType) => {
+      const intentKey = normalizeIntentKey(requestedImageType);
+      if (intentKey.length === 0) {
+        return true;
+      }
+      if (
+        priorRequestedImageIntentKeys.has(intentKey) ||
+        seenRequestedImageIntentKeys.has(intentKey)
+      ) {
+        return false;
+      }
+      seenRequestedImageIntentKeys.add(intentKey);
+      return true;
+    }
+  );
+
+  if (filteredImageTypes.length === 0) {
+    return makeGuardrailInconclusiveResponse(
+      response,
+      "duplicate_followup_intent",
+      "The analysis remains inconclusive because additional image requests would repeat earlier requests."
+    );
+  }
+
+  if (filteredImageTypes.length !== response.requestedImageTypes.length) {
+    return {
+      ...response,
+      requestedImageTypes: filteredImageTypes,
+    };
+  }
+
+  return response;
+}
+
 export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
   return async function runAnalysisPass(
     input: RunAnalysisPassInput
@@ -88,6 +302,7 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
     const canUseExistingProcessingState =
       input.assumeAlreadyProcessing === true &&
       analysis.status === AnalysisStatus.PROCESSING;
+    const shouldRestartFromFailure = analysis.status === AnalysisStatus.FAILED;
 
     if (
       !canStartOrContinue(analysis.status) &&
@@ -114,17 +329,21 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
       await persistStatus(analysis.id, AnalysisStatus.PROCESSING);
     }
 
+    const storedPriorInteractions =
+      await deps.analysisInteractionRepository.listByAnalysisId(analysis.id);
+    const effectivePriorInteractions = shouldRestartFromFailure
+      ? []
+      : storedPriorInteractions;
+
     let response: AIAnalysisResponse;
     try {
-      const priorInteractions =
-        await deps.analysisInteractionRepository.listByAnalysisId(analysis.id);
       const imageInputs = await deps.prepareImages(images, deps.fileStorage);
 
       response = await deps.aiAnalysisProvider.analyze({
         analysisId: analysis.id,
         title: analysis.title,
         images: imageInputs,
-        priorInteractions: priorInteractions.map((interaction) => ({
+        priorInteractions: effectivePriorInteractions.map((interaction) => ({
           role: interaction.role,
           interactionType: interaction.interactionType,
           content: interaction.content,
@@ -149,6 +368,8 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
         ? error
         : new AIProviderError(message);
     }
+
+    response = applyFollowupGuardrails(response, effectivePriorInteractions);
 
     // Normalize response -> persistence. Each branch:
     //  - creates exactly one assistant interaction that describes what it did

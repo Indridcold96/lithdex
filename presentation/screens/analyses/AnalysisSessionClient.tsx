@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, type ChangeEvent, type SubmitEvent } from "react";
-import { Loader2, Play, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 
 import type { AnalysisImageDto } from "@/application/dto/AnalysisDto";
 import type { AnalysisInteractionDto } from "@/application/dto/AnalysisInteractionDto";
@@ -31,12 +31,9 @@ interface AnalysisSessionClientProps {
 
 interface ConstrainedQuestion {
   id: string;
+  intentKey?: string;
   prompt: string;
   options?: string[];
-}
-
-interface UploadResponseBody {
-  images: AnalysisImageDto[];
 }
 
 function extractQuestionsFromInteraction(
@@ -89,7 +86,7 @@ function findLatestInteractionOfType(
 export function AnalysisSessionClient({
   initialSession,
 }: AnalysisSessionClientProps) {
-  const { session, running, error, run, refetchSession } =
+  const { session, running, error, run, continueAnalysis } =
     useAnalysisSessionFlow(initialSession);
 
   const { images, interactions, status, result } = session;
@@ -132,23 +129,19 @@ export function AnalysisSessionClient({
 
       <ImagesCard
         images={images}
-        analysisId={session.id}
-        canUpload={status === AnalysisStatus.NEEDS_INPUT}
-        pendingImageRequests={pendingImageRequests}
-        onUploaded={async () => {
-          await refetchSession();
-        }}
+        pendingImageRequests={
+          status === AnalysisStatus.NEEDS_INPUT ? pendingImageRequests : []
+        }
       />
 
       {status === AnalysisStatus.PROCESSING ? <ProcessingCard /> : null}
 
-      {status === AnalysisStatus.NEEDS_INPUT && pendingQuestions.length > 0 ? (
-        <QuestionsCard
-          analysisId={session.id}
+      {status === AnalysisStatus.NEEDS_INPUT ? (
+        <FollowupStepCard
           questions={pendingQuestions}
-          onAnswered={async () => {
-            await refetchSession();
-          }}
+          pendingImageRequests={pendingImageRequests}
+          running={running}
+          onContinue={continueAnalysis}
         />
       ) : null}
 
@@ -158,11 +151,7 @@ export function AnalysisSessionClient({
 
       {status === AnalysisStatus.FAILED ? <FailedCard session={session} /> : null}
 
-      <RunBlock
-        status={status}
-        running={running}
-        onRun={run}
-      />
+      <RunBlock status={status} running={running} onRun={run} />
 
       <HistorySection interactions={interactions} />
     </div>
@@ -174,7 +163,7 @@ function SessionHeader({ session }: { session: AnalysisSessionDto }) {
     <header className="flex flex-col gap-2 border-b border-border pb-6">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <AnalysisStatusBadge status={session.status} />
-        <span>•</span>
+        <span>&bull;</span>
         <Link
           href={`/analyses/${session.id}`}
           className="underline-offset-4 hover:text-foreground hover:underline"
@@ -216,7 +205,7 @@ function ResultCard({ result }: { result: AnalysisResultDto }) {
         <CardDescription>
           Source: {result.sourceType}
           {typeof result.confidence === "number"
-            ? ` • Confidence ${Math.round(result.confidence * 100)}%`
+            ? ` | Confidence ${Math.round(result.confidence * 100)}%`
             : null}
         </CardDescription>
       </CardHeader>
@@ -266,23 +255,14 @@ function RunBlock({
   running: boolean;
   onRun: () => void;
 }) {
-  if (status !== AnalysisStatus.NEEDS_INPUT && status !== AnalysisStatus.FAILED) {
+  if (status !== AnalysisStatus.FAILED) {
     return null;
   }
-
-  const label =
-    status === AnalysisStatus.NEEDS_INPUT
-      ? "Continue analysis"
-      : "Retry analysis";
 
   return (
     <div className="flex flex-col gap-2 rounded-lg border border-border bg-background/50 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-1">
-        <p className="text-sm font-medium">
-          {status === AnalysisStatus.NEEDS_INPUT
-            ? "Once you've addressed the follow-up, continue the analysis."
-            : "You can retry the analysis."}
-        </p>
+        <p className="text-sm font-medium">You can retry the analysis.</p>
         <p className="text-xs text-muted-foreground">
           Analysis runs synchronously and will return one of: final result,
           needs images, needs clarification, or inconclusive.
@@ -297,12 +277,10 @@ function RunBlock({
       >
         {running ? (
           <Loader2 aria-hidden className="size-4 animate-spin" />
-        ) : status === AnalysisStatus.FAILED ? (
-          <RefreshCw aria-hidden className="size-4" />
         ) : (
-          <Play aria-hidden className="size-4" />
+          <RefreshCw aria-hidden className="size-4" />
         )}
-        {label}
+        Retry analysis
       </Button>
     </div>
   );
@@ -310,64 +288,11 @@ function RunBlock({
 
 function ImagesCard({
   images,
-  analysisId,
-  canUpload,
   pendingImageRequests,
-  onUploaded,
 }: {
   images: AnalysisImageDto[];
-  analysisId: string;
-  canUpload: boolean;
   pendingImageRequests: string[];
-  onUploaded: () => void | Promise<void>;
 }) {
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [inputKey, setInputKey] = useState(0);
-
-  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const files = event.target.files;
-    setSelectedFiles(files ? Array.from(files) : []);
-  }
-
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (selectedFiles.length === 0) return;
-
-    setSubmitting(true);
-    setError(null);
-    try {
-      const formData = new FormData();
-      for (const file of selectedFiles) {
-        formData.append("files", file);
-      }
-      const res = await fetch(
-        `/api/analyses/${analysisId}/followup/images`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        throw new Error(body?.error ?? "Upload failed.");
-      }
-      const data = (await res.json()) as UploadResponseBody;
-      void data;
-      setSelectedFiles([]);
-      // Force the native file input to reset by remounting it.
-      setInputKey((k) => k + 1);
-      await onUploaded();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unexpected error.");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -395,7 +320,7 @@ function ImagesCard({
           </div>
         ) : null}
 
-        {canUpload && pendingImageRequests.length > 0 ? (
+        {pendingImageRequests.length > 0 ? (
           <div className="rounded-md border border-dashed border-border p-3 text-sm">
             <p className="font-medium">The AI requested more images:</p>
             <ul className="mt-1 list-disc pl-5 text-muted-foreground">
@@ -405,121 +330,117 @@ function ImagesCard({
             </ul>
           </div>
         ) : null}
-
-        {canUpload ? (
-          <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
-            <Label htmlFor="followup-files" className="text-sm">
-              Upload additional images
-            </Label>
-            <input
-              key={inputKey}
-              id="followup-files"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              disabled={submitting}
-              onChange={handleFileChange}
-              className="text-sm"
-            />
-            {error ? (
-              <p className="text-xs text-destructive" role="alert">
-                {error}
-              </p>
-            ) : null}
-            <div>
-              <Button
-                type="submit"
-                size="sm"
-                disabled={submitting || selectedFiles.length === 0}
-              >
-                {submitting
-                  ? "Uploading..."
-                  : `Attach ${selectedFiles.length || ""} image${selectedFiles.length === 1 ? "" : "s"}`.trim()}
-              </Button>
-            </div>
-          </form>
-        ) : null}
       </CardContent>
     </Card>
   );
 }
 
-function QuestionsCard({
-  analysisId,
+function FollowupStepCard({
   questions,
-  onAnswered,
+  pendingImageRequests,
+  running,
+  onContinue,
 }: {
-  analysisId: string;
   questions: ConstrainedQuestion[];
-  onAnswered: () => void | Promise<void>;
+  pendingImageRequests: string[];
+  running: boolean;
+  onContinue: (input: {
+    answers: { questionId: string; answer: string }[];
+    files: File[];
+  }) => Promise<void>;
 }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [submitting, setSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [inputKey, setInputKey] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   function setAnswer(id: string, value: string) {
     setAnswers((prev) => ({ ...prev, [id]: value }));
   }
 
+  function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const files = event.target.files;
+    setSelectedFiles(files ? Array.from(files) : []);
+  }
+
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
-    const payload = questions
+    const normalizedAnswers = questions
       .map((q) => ({
         questionId: q.id,
         answer: (answers[q.id] ?? "").trim(),
       }))
-      .filter((a) => a.answer.length > 0);
-    if (payload.length === 0) {
-      setError("Please answer at least one question.");
+      .filter((answer) => answer.answer.length > 0);
+
+    if (normalizedAnswers.length === 0 && selectedFiles.length === 0) {
+      setError("Add at least one answer or follow-up image before continuing.");
       return;
     }
 
-    setSubmitting(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/analyses/${analysisId}/followup/answers`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answers: payload }),
-        }
-      );
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        throw new Error(body?.error ?? "Could not submit answers.");
-      }
+      await onContinue({
+        answers: normalizedAnswers,
+        files: selectedFiles,
+      });
       setAnswers({});
-      await onAnswered();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unexpected error.");
-    } finally {
-      setSubmitting(false);
+      setSelectedFiles([]);
+      setInputKey((key) => key + 1);
+    } catch {
+      // The shared session hook surfaces request failures in the page-level alert.
     }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>The AI asked for clarification</CardTitle>
+        <CardTitle>Guided follow-up</CardTitle>
         <CardDescription>
-          Answer the constrained questions below to help narrow the
-          identification.
+          Complete the requested follow-up and continue the analysis in one
+          step.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          {questions.map((q) => (
-            <QuestionField
-              key={q.id}
-              question={q}
-              value={answers[q.id] ?? ""}
-              onChange={(value) => setAnswer(q.id, value)}
-              disabled={submitting}
-            />
-          ))}
+          {questions.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              <p className="text-sm font-medium">
+                Answer the clarification questions below.
+              </p>
+              {questions.map((q) => (
+                <QuestionField
+                  key={q.id}
+                  question={q}
+                  value={answers[q.id] ?? ""}
+                  onChange={(value) => setAnswer(q.id, value)}
+                  disabled={running}
+                />
+              ))}
+            </div>
+          ) : null}
+
+          {pendingImageRequests.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-medium">
+                Add any requested follow-up images if you have them.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="followup-files" className="text-sm">
+                  Upload additional images
+                </Label>
+                <input
+                  key={inputKey}
+                  id="followup-files"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  disabled={running}
+                  onChange={handleFileChange}
+                  className="text-sm"
+                />
+              </div>
+            </div>
+          ) : null}
 
           {error ? (
             <p className="text-xs text-destructive" role="alert">
@@ -528,8 +449,8 @@ function QuestionsCard({
           ) : null}
 
           <div>
-            <Button type="submit" size="sm" disabled={submitting}>
-              {submitting ? "Submitting..." : "Submit answers"}
+            <Button type="submit" size="sm" disabled={running}>
+              {running ? "Continuing..." : "Continue analysis"}
             </Button>
           </div>
         </form>

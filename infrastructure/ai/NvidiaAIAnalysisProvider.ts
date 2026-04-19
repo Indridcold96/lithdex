@@ -40,6 +40,7 @@ const NormalizedResponseSchema = z.discriminatedUnion("kind", [
       .array(
         z.object({
           id: z.string().min(1),
+          intent_key: z.string().min(1).optional(),
           prompt: z.string().min(1),
           options: z.array(z.string().min(1)).optional(),
         })
@@ -95,6 +96,9 @@ Use ONLY when additional specific photographs would materially improve identific
 3) kind = "needs_clarification"
 Use ONLY when targeted, constrained questions would disambiguate between specific mineral candidates.
 Questions must be narrow and specific. Do NOT ask general open-ended questions.
+Each question must include a short stable "intent_key" that captures the underlying information category
+(for example "lighting_conditions", "streak_color", "hardness_test", "crystal_habit").
+Do not repeat an "intent_key" that was already asked earlier in the same analysis.
 If helpful, include a bounded list of options.
 {
   "kind": "needs_clarification",
@@ -102,6 +106,7 @@ If helpful, include a bounded list of options.
   "questions": [
     {
       "id": "q1",
+      "intent_key": "lighting_conditions",
       "prompt": "specific constrained question",
       "options": ["option A", "option B", "option C"]
     }
@@ -115,7 +120,11 @@ Use when neither more images nor more clarifications will realistically resolve 
   "kind": "inconclusive",
   "summary": "one-line summary",
   "reason": "why identification is not possible from this material"
-}`;
+}
+
+Follow-up discipline:
+- Do not repeat question categories or image requests that were already asked earlier in the analysis.
+- If the prior interactions show repeated attempts without enough new evidence, prefer "inconclusive" over another repetitive follow-up.`;
 
 interface ChatMessageContentText {
   type: "text";
@@ -166,7 +175,13 @@ function buildUserMessage(input: AIAnalysisRequestInput): ChatMessage {
 
   if (input.priorInteractions.length > 0) {
     const history = input.priorInteractions
-      .map((i) => `- [${i.role}/${i.interactionType}] ${i.content}`)
+      .map((i) => {
+        const metadataSuffix =
+          i.metadataJson && typeof i.metadataJson === "object"
+            ? ` | metadata=${JSON.stringify(i.metadataJson)}`
+            : "";
+        return `- [${i.role}/${i.interactionType}] ${i.content}${metadataSuffix}`;
+      })
       .join("\n");
     parts.push({
       type: "text",
@@ -308,6 +323,7 @@ export class NvidiaAIAnalysisProvider implements AIAnalysisProvider {
           summary: parsed.summary,
           questions: parsed.questions.map((q) => ({
             id: q.id,
+            intentKey: q.intent_key,
             prompt: q.prompt,
             options: q.options,
           })),

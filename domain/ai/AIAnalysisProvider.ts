@@ -29,6 +29,7 @@ export interface AIAnalysisAlternative {
 export interface AIAnalysisConstrainedQuestion {
   id: string;
   prompt: string;
+  intentKey?: string;
   options?: string[];
 }
 

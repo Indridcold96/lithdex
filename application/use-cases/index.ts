@@ -6,6 +6,7 @@ export * from "./list-public-analyses";
 export * from "./list-user-analyses";
 export * from "./access-analysis-image";
 export * from "./run-analysis-pass";
+export * from "./submit-followup-and-run";
 export * from "./submit-followup-answers";
 export * from "./upload-followup-images";
 export * from "./add-analysis-comment";
