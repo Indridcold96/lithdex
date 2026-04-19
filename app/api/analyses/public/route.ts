@@ -29,8 +29,8 @@ export async function GET(request: NextRequest) {
       analysisImageRepository,
     });
 
-    const dtos = await listPublicAnalyses({ limit, cursor });
-    return NextResponse.json(dtos, { status: 200 });
+    const page = await listPublicAnalyses({ limit, cursor });
+    return NextResponse.json(page, { status: 200 });
   } catch (error) {
     return errorToResponse(error);
   }

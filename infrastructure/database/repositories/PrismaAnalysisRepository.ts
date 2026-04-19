@@ -7,6 +7,7 @@ import type {
   AnalysisRepository,
   CreateAnalysisShellData,
   ListPublicAnalysesOptions,
+  ListPublicAnalysesResult,
   ListUserAnalysesOptions,
 } from "@/domain/repositories/AnalysisRepository";
 
@@ -37,8 +38,9 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
 
   async listPublic(
     options: ListPublicAnalysesOptions = {}
-  ): Promise<Analysis[]> {
+  ): Promise<ListPublicAnalysesResult> {
     const { limit, cursor } = options;
+    const take = typeof limit === "number" ? limit + 1 : undefined;
 
     const rows = await this.prisma.analysis.findMany({
       where: {
@@ -46,12 +48,25 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
         status: AnalysisStatus.COMPLETED,
         publishedAt: { not: null },
       },
-      orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-      ...(typeof limit === "number" ? { take: limit } : {}),
+      orderBy: [
+        { publishedAt: "desc" },
+        { createdAt: "desc" },
+        { id: "desc" },
+      ],
+      ...(typeof take === "number" ? { take } : {}),
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
 
-    return rows.map(toDomain);
+    const hasMore = typeof limit === "number" ? rows.length > limit : false;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    const items = pageRows.map(toDomain);
+
+    return {
+      items,
+      nextCursor:
+        hasMore && items.length > 0 ? items[items.length - 1].id : null,
+      hasMore,
+    };
   }
 
   async listByUserId(

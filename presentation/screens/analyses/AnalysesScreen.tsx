@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 
-import type { AnalysisDto } from "@/application/dto/AnalysisDto";
+import type { PublicAnalysesPageDto } from "@/application/dto/PublicAnalysesPageDto";
 import { makeListPublicAnalyses } from "@/application/use-cases/list-public-analyses";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisImageRepository } from "@/infrastructure/database/repositories/PrismaAnalysisImageRepository";
@@ -15,10 +15,11 @@ import {
   CardTitle,
 } from "@/presentation/ui/card";
 import { PageHeader } from "@/presentation/components/PageHeader";
+import { PublicAnalysesFeed } from "./PublicAnalysesFeed";
 
 const LIST_LIMIT = 20;
 
-async function loadPublicAnalyses(): Promise<AnalysisDto[]> {
+async function loadPublicAnalyses(): Promise<PublicAnalysesPageDto> {
   const analysisRepository = new PrismaAnalysisRepository(prisma);
   const analysisImageRepository = new PrismaAnalysisImageRepository(prisma);
   const listPublicAnalyses = makeListPublicAnalyses({
@@ -28,16 +29,8 @@ async function loadPublicAnalyses(): Promise<AnalysisDto[]> {
   return listPublicAnalyses({ limit: LIST_LIMIT });
 }
 
-function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(date);
-}
-
 export async function AnalysesScreen() {
-  const analyses = await loadPublicAnalyses();
+  const page = await loadPublicAnalyses();
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-12">
@@ -58,7 +51,7 @@ export async function AnalysesScreen() {
         }
       />
 
-      {analyses.length === 0 ? (
+      {page.items.length === 0 ? (
         <Card>
           <CardHeader>
             <CardTitle>No analyses yet</CardTitle>
@@ -73,49 +66,8 @@ export async function AnalysesScreen() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {analyses.map((analysis) => (
-            <AnalysisCard key={analysis.id} analysis={analysis} />
-          ))}
-        </div>
+        <PublicAnalysesFeed initialPage={page} limit={LIST_LIMIT} />
       )}
     </div>
-  );
-}
-
-function AnalysisCard({ analysis }: { analysis: AnalysisDto }) {
-  const cover = analysis.images[0];
-  const extraCount = Math.max(analysis.images.length - 1, 0);
-  const createdLabel = formatDate(new Date(analysis.createdAt));
-
-  return (
-    <Link
-      href={`/analyses/${analysis.id}`}
-      className="group rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-    >
-      <Card className="overflow-hidden transition group-hover:border-foreground/30">
-        {cover ? (
-          <div className="relative aspect-video w-full overflow-hidden bg-muted">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={cover.url}
-              alt={cover.originalFilename ?? "Analysis cover image"}
-              className="h-full w-full object-cover transition group-hover:scale-[1.02]"
-            />
-            {extraCount > 0 ? (
-              <span className="absolute bottom-2 right-2 rounded-md bg-background/80 px-2 py-0.5 text-xs font-medium text-foreground backdrop-blur">
-                +{extraCount} more
-              </span>
-            ) : null}
-          </div>
-        ) : null}
-        <CardHeader>
-          <CardTitle className="text-base">
-            {analysis.title ?? "Untitled analysis"}
-          </CardTitle>
-          <CardDescription>{createdLabel}</CardDescription>
-        </CardHeader>
-      </Card>
-    </Link>
   );
 }

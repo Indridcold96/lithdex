@@ -12,4 +12,5 @@ export interface AnalysisImageRepository {
   create(data: CreateAnalysisImageData): Promise<AnalysisImage>;
   findById(id: string): Promise<AnalysisImage | null>;
   listByAnalysisId(analysisId: string): Promise<AnalysisImage[]>;
+  listByAnalysisIds(analysisIds: string[]): Promise<AnalysisImage[]>;
 }

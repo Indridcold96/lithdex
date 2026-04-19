@@ -23,4 +23,13 @@ export class PrismaAnalysisImageRepository implements AnalysisImageRepository {
       orderBy: { sortOrder: "asc" },
     });
   }
+
+  async listByAnalysisIds(analysisIds: string[]): Promise<AnalysisImage[]> {
+    if (analysisIds.length === 0) return [];
+
+    return this.prisma.analysisImage.findMany({
+      where: { analysisId: { in: analysisIds } },
+      orderBy: [{ analysisId: "asc" }, { sortOrder: "asc" }],
+    });
+  }
 }

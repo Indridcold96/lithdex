@@ -4,7 +4,8 @@ import type {
   ListPublicAnalysesOptions,
 } from "@/domain/repositories/AnalysisRepository";
 
-import { toAnalysisDto, type AnalysisDto } from "../dto/AnalysisDto";
+import { toAnalysisDto } from "../dto/AnalysisDto";
+import type { PublicAnalysesPageDto } from "../dto/PublicAnalysesPageDto";
 
 export type ListPublicAnalysesInput = ListPublicAnalysesOptions;
 
@@ -16,17 +17,32 @@ export interface ListPublicAnalysesDeps {
 export function makeListPublicAnalyses(deps: ListPublicAnalysesDeps) {
   return async function listPublicAnalyses(
     input: ListPublicAnalysesInput = {}
-  ): Promise<AnalysisDto[]> {
-    const analyses = await deps.analysisRepository.listPublic(input);
-
-    return Promise.all(
-      analyses.map(async (analysis) => {
-        const images = await deps.analysisImageRepository.listByAnalysisId(
-          analysis.id
-        );
-        return toAnalysisDto(analysis, images);
-      })
+  ): Promise<PublicAnalysesPageDto> {
+    const page = await deps.analysisRepository.listPublic(input);
+    const analysisIds = page.items.map((analysis) => analysis.id);
+    const images = await deps.analysisImageRepository.listByAnalysisIds(
+      analysisIds
     );
+    const imagesByAnalysisId = new Map<string, typeof images>();
+
+    for (const image of images) {
+      const existing = imagesByAnalysisId.get(image.analysisId);
+      if (existing) {
+        existing.push(image);
+      } else {
+        imagesByAnalysisId.set(image.analysisId, [image]);
+      }
+    }
+
+    const items = page.items.map((analysis) =>
+      toAnalysisDto(analysis, imagesByAnalysisId.get(analysis.id) ?? [])
+    );
+
+    return {
+      items,
+      nextCursor: page.nextCursor,
+      hasMore: page.hasMore,
+    };
   };
 }
 

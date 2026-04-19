@@ -15,6 +15,12 @@ export interface ListPublicAnalysesOptions {
   cursor?: string;
 }
 
+export interface ListPublicAnalysesResult {
+  items: Analysis[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
 export interface ListUserAnalysesOptions {
   limit?: number;
   cursor?: string;
@@ -23,7 +29,9 @@ export interface ListUserAnalysesOptions {
 export interface AnalysisRepository {
   createShell(data: CreateAnalysisShellData): Promise<Analysis>;
   findById(id: string): Promise<Analysis | null>;
-  listPublic(options?: ListPublicAnalysesOptions): Promise<Analysis[]>;
+  listPublic(
+    options?: ListPublicAnalysesOptions
+  ): Promise<ListPublicAnalysesResult>;
   listByUserId(
     userId: string,
     options?: ListUserAnalysesOptions
