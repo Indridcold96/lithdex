@@ -8,5 +8,8 @@ export interface CreateAnalysisCommentData {
 
 export interface AnalysisCommentRepository {
   create(data: CreateAnalysisCommentData): Promise<AnalysisComment>;
+  findById(id: string): Promise<AnalysisComment | null>;
   listByAnalysisId(analysisId: string): Promise<AnalysisComment[]>;
+  updateContent(id: string, content: string): Promise<AnalysisComment>;
+  deleteById(id: string): Promise<void>;
 }

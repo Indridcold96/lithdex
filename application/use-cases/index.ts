@@ -10,5 +10,7 @@ export * from "./submit-followup-and-run";
 export * from "./submit-followup-answers";
 export * from "./upload-followup-images";
 export * from "./add-analysis-comment";
+export * from "./update-analysis-comment";
+export * from "./delete-analysis-comment";
 export * from "./add-analysis-feedback";
 export * from "./set-analysis-visibility";

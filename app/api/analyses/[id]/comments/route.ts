@@ -41,7 +41,7 @@ export async function POST(request: NextRequest, ctx: RouteContext) {
     });
 
     const author = await userRepository.findById(userId);
-    return NextResponse.json(toAnalysisCommentDto(comment, author), {
+    return NextResponse.json(toAnalysisCommentDto(comment, author, userId), {
       status: 201,
     });
   } catch (error) {

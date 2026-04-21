@@ -72,7 +72,11 @@ export function makeGetAnalysisDetail(deps: GetAnalysisDetailDeps) {
       : null;
 
     const commentDtos = comments.map((comment) =>
-      toAnalysisCommentDto(comment, usersById.get(comment.userId) ?? null)
+      toAnalysisCommentDto(
+        comment,
+        usersById.get(comment.userId) ?? null,
+        input.viewerUserId
+      )
     );
 
     const viewerFeedback = input.viewerUserId

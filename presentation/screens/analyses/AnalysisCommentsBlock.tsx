@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type SubmitEvent } from "react";
+import type { SubmitEvent } from "react";
 
 import type { AnalysisCommentDto } from "@/application/dto/AnalysisCommentDto";
+import { useAnalysisComments } from "@/presentation/hooks/useAnalysisComments";
 import { Button } from "@/presentation/ui/button";
 import {
   Card,
@@ -21,50 +22,45 @@ interface AnalysisCommentsBlockProps {
   initialComments: AnalysisCommentDto[];
 }
 
-const COMMENT_MAX_LENGTH = 4000;
-
 export function AnalysisCommentsBlock({
   analysisId,
   isPublic,
   isAuthenticated,
   initialComments,
 }: AnalysisCommentsBlockProps) {
-  const [comments, setComments] =
-    useState<AnalysisCommentDto[]>(initialComments);
-  const [content, setContent] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    comments,
+    content,
+    setContent,
+    submitting,
+    createError,
+    editingCommentId,
+    editingContent,
+    setEditingContent,
+    savingCommentId,
+    deletingCommentId,
+    commentErrors,
+    canComment,
+    commentMaxLength,
+    submitNewComment,
+    startEditing,
+    cancelEditing,
+    saveEdit,
+    deleteComment,
+  } = useAnalysisComments({
+    analysisId,
+    isPublic,
+    isAuthenticated,
+    initialComments,
+  });
 
-  const canComment = isPublic && isAuthenticated;
-
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canComment) return;
-    const trimmed = content.trim();
-    if (trimmed.length === 0) return;
-
-    setSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/analyses/${analysisId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: trimmed }),
-      });
-      if (!res.ok) {
-        const body = (await res.json().catch(() => null)) as
-          | { error?: string }
-          | null;
-        throw new Error(body?.error ?? "Could not post comment.");
-      }
-      const comment = (await res.json()) as AnalysisCommentDto;
-      setComments((prev) => [...prev, comment]);
-      setContent("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Unexpected error.");
-    } finally {
-      setSubmitting(false);
+  async function handleDelete(comment: AnalysisCommentDto) {
+    const confirmed = window.confirm("Delete this comment?");
+    if (!confirmed) {
+      return;
     }
+
+    await deleteComment(comment);
   }
 
   return (
@@ -79,36 +75,51 @@ export function AnalysisCommentsBlock({
       </CardHeader>
       <CardContent className="space-y-5">
         {comments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No comments yet.
-          </p>
+          <p className="text-sm text-muted-foreground">No comments yet.</p>
         ) : (
           <ul className="space-y-4">
             {comments.map((comment) => (
-              <CommentItem key={comment.id} comment={comment} />
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                error={commentErrors[comment.id] ?? null}
+                isEditing={editingCommentId === comment.id}
+                isManagementLocked={
+                  editingCommentId !== null && editingCommentId !== comment.id
+                }
+                isSaving={savingCommentId === comment.id}
+                isDeleting={deletingCommentId === comment.id}
+                editingContent={editingContent}
+                onEditingContentChange={setEditingContent}
+                onStartEditing={() => startEditing(comment)}
+                onCancelEditing={cancelEditing}
+                onSaveEditing={() => saveEdit(comment.id)}
+                onDelete={() => handleDelete(comment)}
+                commentMaxLength={commentMaxLength}
+              />
             ))}
           </ul>
         )}
 
         {canComment ? (
-          <form className="flex flex-col gap-2" onSubmit={handleSubmit}>
+          <form className="flex flex-col gap-2" onSubmit={submitNewComment}>
             <Textarea
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(event) => setContent(event.target.value)}
               placeholder="Write a comment..."
-              maxLength={COMMENT_MAX_LENGTH}
+              maxLength={commentMaxLength}
               rows={3}
               disabled={submitting}
               aria-label="Comment content"
             />
-            {error ? (
+            {createError ? (
               <p className="text-xs text-destructive" role="alert">
-                {error}
+                {createError}
               </p>
             ) : null}
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground">
-                {content.trim().length} / {COMMENT_MAX_LENGTH}
+                {content.trim().length} / {commentMaxLength}
               </span>
               <Button
                 type="submit"
@@ -145,21 +156,142 @@ function formatTimestamp(date: Date): string {
   }).format(date);
 }
 
-function CommentItem({ comment }: { comment: AnalysisCommentDto }) {
+interface CommentItemProps {
+  comment: AnalysisCommentDto;
+  error: string | null;
+  isEditing: boolean;
+  isManagementLocked: boolean;
+  isSaving: boolean;
+  isDeleting: boolean;
+  editingContent: string;
+  onEditingContentChange: (value: string) => void;
+  onStartEditing: () => void;
+  onCancelEditing: () => void;
+  onSaveEditing: () => void;
+  onDelete: () => void;
+  commentMaxLength: number;
+}
+
+function CommentItem({
+  comment,
+  error,
+  isEditing,
+  isManagementLocked,
+  isSaving,
+  isDeleting,
+  editingContent,
+  onEditingContentChange,
+  onStartEditing,
+  onCancelEditing,
+  onSaveEditing,
+  onDelete,
+  commentMaxLength,
+}: CommentItemProps) {
   const nickname = comment.author?.nickname ?? "Unknown user";
   const createdAt = new Date(comment.createdAt);
+  const isBusy = isSaving || isDeleting;
+  const canManage =
+    comment.viewerPermissions.canEdit || comment.viewerPermissions.canDelete;
+
+  function handleEditSubmit(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void onSaveEditing();
+  }
 
   return (
     <li className="flex flex-col gap-1 rounded-lg border border-border bg-background/50 p-3">
-      <div className="flex flex-wrap items-baseline gap-2 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">{nickname}</span>
-        <time dateTime={createdAt.toISOString()}>
-          {formatTimestamp(createdAt)}
-        </time>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="flex flex-wrap items-baseline gap-2 text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">{nickname}</span>
+          <time dateTime={createdAt.toISOString()}>
+            {formatTimestamp(createdAt)}
+          </time>
+          {comment.isEdited ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px]">
+              Edited
+            </span>
+          ) : null}
+        </div>
+
+        {!isEditing && canManage ? (
+          <div className="flex items-center gap-1">
+            {comment.viewerPermissions.canEdit ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                disabled={isBusy || isManagementLocked}
+                onClick={onStartEditing}
+              >
+                Edit
+              </Button>
+            ) : null}
+            {comment.viewerPermissions.canDelete ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                disabled={isBusy || isManagementLocked}
+                onClick={onDelete}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
-      <p className="text-sm whitespace-pre-wrap leading-relaxed">
-        {comment.content}
-      </p>
+
+      {isEditing ? (
+        <form className="flex flex-col gap-2" onSubmit={handleEditSubmit}>
+          <Textarea
+            value={editingContent}
+            onChange={(event) => onEditingContentChange(event.target.value)}
+            rows={3}
+            maxLength={commentMaxLength}
+            disabled={isBusy}
+            aria-label="Edit comment content"
+          />
+          {error ? (
+            <p className="text-xs text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-muted-foreground">
+              {editingContent.trim().length} / {commentMaxLength}
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={isBusy}
+                onClick={onCancelEditing}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={isBusy || editingContent.trim().length === 0}
+              >
+                {isSaving ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        </form>
+      ) : (
+        <>
+          <p className="text-sm whitespace-pre-wrap leading-relaxed">
+            {comment.content}
+          </p>
+          {error ? (
+            <p className="text-xs text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
+        </>
+      )}
     </li>
   );
 }
