@@ -15,3 +15,12 @@ export function buildAnalysisImageStorageKey(args: {
   const paddedOrder = String(sortOrder).padStart(2, "0");
   return `analyses/${analysisId}/${paddedOrder}-${randomUUID()}.${ext}`;
 }
+
+export function buildUserAvatarStorageKey(args: {
+  userId: string;
+  mimeType: AllowedImageMimeType;
+}): string {
+  const { userId, mimeType } = args;
+  const ext = extensionForMimeType(mimeType);
+  return `users/${userId}/avatar-${randomUUID()}.${ext}`;
+}

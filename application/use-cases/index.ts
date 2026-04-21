@@ -14,3 +14,6 @@ export * from "./update-analysis-comment";
 export * from "./delete-analysis-comment";
 export * from "./add-analysis-feedback";
 export * from "./set-analysis-visibility";
+export * from "./update-current-user-profile";
+export * from "./upload-user-avatar";
+export * from "./access-user-avatar";

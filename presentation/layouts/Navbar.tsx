@@ -15,7 +15,7 @@ export async function Navbar() {
   const isAuthenticated = userId !== null;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link
           href="/"
@@ -35,6 +35,14 @@ export async function Navbar() {
               render={<Link href={link.href}>{link.label}</Link>}
             />
           ))}
+          {isAuthenticated ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              nativeButton={false}
+              render={<Link href="/settings/profile">Profile</Link>}
+            />
+          ) : null}
           {!isAuthenticated ? (
             <div className="ml-2 flex items-center gap-1 border-l border-border pl-2">
               <Button

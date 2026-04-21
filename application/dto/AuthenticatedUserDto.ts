@@ -19,12 +19,21 @@ export interface PublicUserDto {
   createdAt: Date;
 }
 
+function toUserAvatarUrl(user: User): string | null {
+  if (!user.avatarUrl) {
+    return null;
+  }
+
+  const version = user.updatedAt.getTime();
+  return `/api/users/${encodeURIComponent(user.id)}/avatar?v=${version}`;
+}
+
 export function toAuthenticatedUserDto(user: User): AuthenticatedUserDto {
   return {
     id: user.id,
     email: user.email,
     nickname: user.nickname,
-    avatarUrl: user.avatarUrl,
+    avatarUrl: toUserAvatarUrl(user),
     bio: user.bio,
     role: user.role,
     createdAt: user.createdAt,
@@ -36,7 +45,7 @@ export function toPublicUserDto(user: User): PublicUserDto {
   return {
     id: user.id,
     nickname: user.nickname,
-    avatarUrl: user.avatarUrl,
+    avatarUrl: toUserAvatarUrl(user),
     bio: user.bio,
     createdAt: user.createdAt,
   };
