@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@/generated/prisma/client";
 
 import type { AnalysisFeedback } from "@/domain/entities/AnalysisFeedback";
 import { AnalysisFeedbackType } from "@/domain/enums/AnalysisFeedbackType";

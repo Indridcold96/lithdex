@@ -1,4 +1,4 @@
-import type { PrismaClient, Prisma } from "@prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 import type { AnalysisInteraction } from "@/domain/entities/AnalysisInteraction";
 import type { AnalysisInteractionRole } from "@/domain/enums/AnalysisInteractionRole";
