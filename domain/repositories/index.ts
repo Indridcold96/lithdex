@@ -5,3 +5,4 @@ export * from "./AnalysisFeedbackRepository";
 export * from "./AnalysisInteractionRepository";
 export * from "./AnalysisResultRepository";
 export * from "./UserRepository";
+export * from "./UserFollowRepository";

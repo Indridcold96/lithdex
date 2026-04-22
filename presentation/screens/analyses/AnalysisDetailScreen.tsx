@@ -173,7 +173,17 @@ function DetailHeader({
       </h1>
 
       <p className="text-sm text-muted-foreground sm:text-base">
-        By <span className="font-medium text-foreground">{ownerNickname}</span>
+        By{" "}
+        {detail.owner ? (
+          <Link
+            href={`/members/${encodeURIComponent(detail.owner.nickname)}`}
+            className="font-medium text-foreground underline-offset-4 hover:underline"
+          >
+            {ownerNickname}
+          </Link>
+        ) : (
+          <span className="font-medium text-foreground">{ownerNickname}</span>
+        )}
       </p>
 
       <div className="text-sm">

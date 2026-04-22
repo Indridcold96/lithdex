@@ -12,14 +12,13 @@ export interface AuthenticatedUserDto {
 }
 
 export interface PublicUserDto {
-  id: string;
   nickname: string;
   avatarUrl: string | null;
   bio: string | null;
   createdAt: Date;
 }
 
-function toUserAvatarUrl(user: User): string | null {
+export function toUserAvatarUrl(user: User): string | null {
   if (!user.avatarUrl) {
     return null;
   }
@@ -43,7 +42,6 @@ export function toAuthenticatedUserDto(user: User): AuthenticatedUserDto {
 
 export function toPublicUserDto(user: User): PublicUserDto {
   return {
-    id: user.id,
     nickname: user.nickname,
     avatarUrl: toUserAvatarUrl(user),
     bio: user.bio,

@@ -21,6 +21,21 @@ model User {
   analyses Analysis[]
   comments AnalysisComment[]
   feedback AnalysisFeedback[]
+  following UserFollow[]      @relation("UserFollowFollower")
+  followers UserFollow[]      @relation("UserFollowFollowed")
+}
+
+model UserFollow {
+  followerId String
+  followedId String
+  createdAt  DateTime @default(now())
+
+  follower User @relation("UserFollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  followed User @relation("UserFollowFollowed", fields: [followedId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followedId])
+  @@index([followerId])
+  @@index([followedId])
 }
 
 model Mineral {

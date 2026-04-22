@@ -17,3 +17,6 @@ export * from "./set-analysis-visibility";
 export * from "./update-current-user-profile";
 export * from "./upload-user-avatar";
 export * from "./access-user-avatar";
+export * from "./get-public-user-profile-by-nickname";
+export * from "./follow-user";
+export * from "./unfollow-user";

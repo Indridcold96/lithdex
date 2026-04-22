@@ -202,7 +202,16 @@ function CommentItem({
     <li className="flex flex-col gap-1 rounded-lg border border-border bg-background/50 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex flex-wrap items-baseline gap-2 text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">{nickname}</span>
+          {comment.author ? (
+            <Link
+              href={`/members/${encodeURIComponent(comment.author.nickname)}`}
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              {nickname}
+            </Link>
+          ) : (
+            <span className="font-medium text-foreground">{nickname}</span>
+          )}
           <time dateTime={createdAt.toISOString()}>
             {formatTimestamp(createdAt)}
           </time>
