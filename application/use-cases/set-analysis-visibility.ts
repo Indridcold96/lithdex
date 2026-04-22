@@ -1,12 +1,18 @@
 import type { Analysis } from "@/domain/entities/Analysis";
 import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
-import { shouldPublishAnalysis } from "@/domain/rules/analysis";
+import { canPublishAnalysis } from "@/domain/rules/analysis";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 
-import { ValidationError } from "../errors";
+import {
+  ForbiddenError,
+  NotFoundError,
+  UnauthenticatedError,
+  ValidationError,
+} from "../errors";
 
 export interface SetAnalysisVisibilityInput {
   analysisId: string;
+  requesterUserId: string | null;
   visibility: AnalysisVisibility | string;
 }
 
@@ -28,16 +34,39 @@ export function makeSetAnalysisVisibility(deps: SetAnalysisVisibilityDeps) {
       );
     }
 
-    const analysis = await deps.analysisRepository.updateVisibility(
-      input.analysisId,
-      input.visibility
-    );
-
-    if (!shouldPublishAnalysis(analysis)) {
-      return analysis;
+    if (!input.requesterUserId) {
+      throw new UnauthenticatedError("Authentication required.");
     }
 
-    return deps.analysisRepository.setPublishedAt(analysis.id, new Date());
+    const analysis = await deps.analysisRepository.findById(input.analysisId);
+    if (!analysis) {
+      throw new NotFoundError(`Analysis not found: ${input.analysisId}`);
+    }
+    if (analysis.userId !== input.requesterUserId) {
+      throw new ForbiddenError(
+        "Only the owner can change this analysis visibility."
+      );
+    }
+
+    if (
+      input.visibility === AnalysisVisibility.PUBLIC &&
+      !canPublishAnalysis(analysis.status)
+    ) {
+      throw new ValidationError(
+        "Only completed analyses can be published to the public library."
+      );
+    }
+
+    const nextPublishedAt =
+      input.visibility === AnalysisVisibility.PUBLIC
+        ? (analysis.publishedAt ?? new Date())
+        : null;
+
+    return deps.analysisRepository.updateVisibilityState({
+      id: analysis.id,
+      visibility: input.visibility,
+      publishedAt: nextPublishedAt,
+    });
   };
 }
 

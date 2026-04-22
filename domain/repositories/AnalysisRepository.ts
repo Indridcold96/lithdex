@@ -40,6 +40,11 @@ export interface AnalysisRepository {
     id: string,
     visibility: AnalysisVisibility
   ): Promise<Analysis>;
+  updateVisibilityState(data: {
+    id: string;
+    visibility: AnalysisVisibility;
+    publishedAt: Date | null;
+  }): Promise<Analysis>;
   updateStatus(id: string, status: AnalysisStatus): Promise<Analysis>;
   setPublishedAt(id: string, publishedAt: Date | null): Promise<Analysis>;
   deleteById(id: string): Promise<void>;

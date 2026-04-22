@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import type { AnalysisDetailDto } from "@/application/dto/AnalysisDetailDto";
-import { makeGetAnalysisDetail } from "@/application/use-cases/get-analysis-detail";
 import { NotFoundError } from "@/application/errors";
+import { makeGetAnalysisDetail } from "@/application/use-cases/get-analysis-detail";
 import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
 import { getServerSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
@@ -24,11 +24,12 @@ import {
 
 import { Button } from "@/presentation/ui/button";
 
+import { AnalysisCommentsBlock } from "./AnalysisCommentsBlock";
 import { AnalysisFeedbackActions } from "./AnalysisFeedbackActions";
 import { AnalysisGallery } from "./AnalysisGallery";
-import { AnalysisCommentsBlock } from "./AnalysisCommentsBlock";
 import { AnalysisPublicInteractions } from "./AnalysisPublicInteractions";
 import { AnalysisStatusBadge } from "./AnalysisStatusBadge";
+import { AnalysisVisibilityActions } from "./AnalysisVisibilityActions";
 
 interface AnalysisDetailScreenProps {
   id: string;
@@ -134,7 +135,6 @@ function DetailHeader({
   detail: AnalysisDetailDto;
   isOwner: boolean;
 }) {
-  const isPublic = detail.visibility === AnalysisVisibility.PUBLIC;
   const title = detail.title ?? "Untitled analysis";
   const createdLabel = formatDate(new Date(detail.createdAt));
   const ownerNickname = detail.owner?.nickname ?? "Unknown author";
@@ -142,27 +142,28 @@ function DetailHeader({
   return (
     <header className="flex flex-col gap-3 border-b border-border pb-6">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <VisibilityBadge isPublic={isPublic} />
         <AnalysisStatusBadge status={detail.status} />
-        {isOwner ? (
-          <span className="rounded-md border border-border px-2 py-0.5 text-xs font-medium">
-            You own this
-          </span>
-        ) : null}
-        <span>•</span>
+        <span>&bull;</span>
         <span>Created {createdLabel}</span>
       </div>
 
       {isOwner ? (
-        <div>
+        <div className="flex flex-col gap-3">
           <Button
             size="sm"
+            variant="secondary"
+            className="self-start"
             nativeButton={false}
-            render={
-              <Link href={`/analyses/${detail.id}/session`}>
-                Open analysis session →
-              </Link>
+            render={<Link href={`/analyses/${detail.id}/session`}>Open analysis session -&gt;</Link>}
+          />
+          <AnalysisVisibilityActions
+            analysisId={detail.id}
+            status={detail.status}
+            initialVisibility={detail.visibility}
+            initialPublishedAt={
+              detail.publishedAt ? new Date(detail.publishedAt) : null
             }
+            isOwner={isOwner}
           />
         </div>
       ) : null}
@@ -180,25 +181,10 @@ function DetailHeader({
           href="/analyses"
           className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
         >
-          ← Back to analyses
+          &larr; Back to analyses
         </Link>
       </div>
     </header>
-  );
-}
-
-function VisibilityBadge({ isPublic }: { isPublic: boolean }) {
-  return (
-    <span
-      className={
-        "rounded-md px-2 py-0.5 text-xs font-medium " +
-        (isPublic
-          ? "bg-primary/10 text-primary"
-          : "bg-muted text-muted-foreground")
-      }
-    >
-      {isPublic ? "Public" : "Private"}
-    </span>
   );
 }
 

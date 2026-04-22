@@ -27,6 +27,12 @@ export function canRequestFollowUp(
   return !isAnalysisFinalized(status);
 }
 
+export function canPublishAnalysis(
+  status: AnalysisStatus | string
+): boolean {
+  return status === AnalysisStatus.COMPLETED;
+}
+
 export function shouldPublishAnalysis(input: {
   visibility: AnalysisVisibility | string;
   status: AnalysisStatus | string;

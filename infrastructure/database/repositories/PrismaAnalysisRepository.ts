@@ -113,6 +113,22 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
     return toDomain(row);
   }
 
+  async updateVisibilityState(data: {
+    id: string;
+    visibility: AnalysisVisibility;
+    publishedAt: Date | null;
+  }): Promise<Analysis> {
+    const row = await this.prisma.analysis.update({
+      where: { id: data.id },
+      data: {
+        visibility: data.visibility,
+        publishedAt: data.publishedAt,
+      },
+    });
+
+    return toDomain(row);
+  }
+
   async deleteById(id: string): Promise<void> {
     await this.prisma.analysis.delete({ where: { id } });
   }
