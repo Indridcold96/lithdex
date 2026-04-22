@@ -187,7 +187,7 @@ function CommentItem({
   onDelete,
   commentMaxLength,
 }: CommentItemProps) {
-  const nickname = comment.author?.nickname ?? "Unknown user";
+  const username = comment.author?.username ?? "Unknown user";
   const createdAt = new Date(comment.createdAt);
   const isBusy = isSaving || isDeleting;
   const canManage =
@@ -204,13 +204,13 @@ function CommentItem({
         <div className="flex flex-wrap items-baseline gap-2 text-xs text-muted-foreground">
           {comment.author ? (
             <Link
-              href={`/members/${encodeURIComponent(comment.author.nickname)}`}
+              href={`/members/${encodeURIComponent(comment.author.username)}`}
               className="font-medium text-foreground underline-offset-4 hover:underline"
             >
-              {nickname}
+              {username}
             </Link>
           ) : (
-            <span className="font-medium text-foreground">{nickname}</span>
+            <span className="font-medium text-foreground">{username}</span>
           )}
           <time dateTime={createdAt.toISOString()}>
             {formatTimestamp(createdAt)}

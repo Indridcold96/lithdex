@@ -11,12 +11,12 @@ import { errorToResponse } from "@/infrastructure/http/responses";
 export const runtime = "nodejs";
 
 interface RouteContext {
-  params: Promise<{ id: string }>;
+  params: Promise<{ username: string }>;
 }
 
 export async function POST(request: NextRequest, ctx: RouteContext) {
   try {
-    const { id: targetUserId } = await ctx.params;
+    const { username } = await ctx.params;
     const actorUserId = await requireSessionUserId(request);
 
     const followUser = makeFollowUser({
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest, ctx: RouteContext) {
       userFollowRepository: new PrismaUserFollowRepository(prisma),
     });
 
-    const profile = await followUser({ actorUserId, targetUserId });
+    const profile = await followUser({ actorUserId, username });
     return NextResponse.json(profile, { status: 200 });
   } catch (error) {
     return errorToResponse(error);
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest, ctx: RouteContext) {
 
 export async function DELETE(request: NextRequest, ctx: RouteContext) {
   try {
-    const { id: targetUserId } = await ctx.params;
+    const { username } = await ctx.params;
     const actorUserId = await requireSessionUserId(request);
 
     const unfollowUser = makeUnfollowUser({
@@ -41,7 +41,7 @@ export async function DELETE(request: NextRequest, ctx: RouteContext) {
       userFollowRepository: new PrismaUserFollowRepository(prisma),
     });
 
-    const profile = await unfollowUser({ actorUserId, targetUserId });
+    const profile = await unfollowUser({ actorUserId, username });
     return NextResponse.json(profile, { status: 200 });
   } catch (error) {
     return errorToResponse(error);

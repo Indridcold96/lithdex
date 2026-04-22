@@ -1,6 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
+import {
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+} from "@/application/username";
 import { toAuthenticatedUserDto } from "@/application/dto/AuthenticatedUserDto";
 import { makeRegisterUser } from "@/application/use-cases/register-user";
 import { BcryptPasswordHasher } from "@/infrastructure/auth/BcryptPasswordHasher";
@@ -13,11 +17,10 @@ import { errorToResponse } from "@/infrastructure/http/responses";
 
 const RegisterSchema = z.object({
   email: z.email(),
-  nickname: z
+  username: z
     .string()
-    .min(2)
-    .max(32)
-    .regex(/^[a-zA-Z0-9_-]+$/, "Nickname may only contain letters, numbers, _ or -"),
+    .min(USERNAME_MIN_LENGTH)
+    .max(USERNAME_MAX_LENGTH),
   password: z.string().min(8).max(128),
 });
 

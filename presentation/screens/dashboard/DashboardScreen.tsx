@@ -89,7 +89,7 @@ export async function DashboardScreen() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 sm:py-12">
       <PageHeader
         title="Dashboard"
-        description={`Welcome back, ${user.nickname}.`}
+        description={`Welcome back, ${user.username}.`}
         actions={
           <div className="flex items-center gap-2">
             <Button

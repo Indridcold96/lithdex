@@ -1,6 +1,6 @@
 export interface PublicMemberProfileDto {
   userId: string;
-  nickname: string;
+  username: string;
   avatarUrl: string | null;
   bio: string | null;
   joinedAt: Date;

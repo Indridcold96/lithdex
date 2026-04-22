@@ -36,7 +36,7 @@ export function useMemberProfileFollow({
 
     try {
       const response = await fetch(
-        `/api/members/${encodeURIComponent(profile.userId)}/follow`,
+        `/api/members/${encodeURIComponent(profile.username)}/follow`,
         {
           method: profile.viewerIsFollowing ? "DELETE" : "POST",
         }

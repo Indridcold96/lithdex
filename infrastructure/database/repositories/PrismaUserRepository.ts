@@ -22,8 +22,8 @@ export class PrismaUserRepository implements UserRepository {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  async findByNickname(nickname: string): Promise<User | null> {
-    return this.prisma.user.findUnique({ where: { nickname } });
+  async findByUsername(username: string): Promise<User | null> {
+    return this.prisma.user.findUnique({ where: { username } });
   }
 
   async listByIds(ids: string[]): Promise<User[]> {

@@ -1,12 +1,12 @@
 import { MemberProfileScreen } from "@/presentation/screens/members/MemberProfileScreen";
 
 interface MemberProfilePageProps {
-  params: Promise<{ nickname: string }>;
+  params: Promise<{ username: string }>;
 }
 
 export default async function MemberProfilePage({
   params,
 }: MemberProfilePageProps) {
-  const { nickname } = await params;
-  return <MemberProfileScreen nickname={nickname} />;
+  const { username } = await params;
+  return <MemberProfileScreen username={username} />;
 }

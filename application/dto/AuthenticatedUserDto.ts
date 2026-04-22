@@ -3,7 +3,7 @@ import type { User } from "@/domain/entities/User";
 export interface AuthenticatedUserDto {
   id: string;
   email: string;
-  nickname: string;
+  username: string;
   avatarUrl: string | null;
   bio: string | null;
   role: string;
@@ -12,7 +12,7 @@ export interface AuthenticatedUserDto {
 }
 
 export interface PublicUserDto {
-  nickname: string;
+  username: string;
   avatarUrl: string | null;
   bio: string | null;
   createdAt: Date;
@@ -31,7 +31,7 @@ export function toAuthenticatedUserDto(user: User): AuthenticatedUserDto {
   return {
     id: user.id,
     email: user.email,
-    nickname: user.nickname,
+    username: user.username,
     avatarUrl: toUserAvatarUrl(user),
     bio: user.bio,
     role: user.role,
@@ -42,7 +42,7 @@ export function toAuthenticatedUserDto(user: User): AuthenticatedUserDto {
 
 export function toPublicUserDto(user: User): PublicUserDto {
   return {
-    nickname: user.nickname,
+    username: user.username,
     avatarUrl: toUserAvatarUrl(user),
     bio: user.bio,
     createdAt: user.createdAt,

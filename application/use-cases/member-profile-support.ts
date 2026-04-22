@@ -5,19 +5,16 @@ import type { UserRepository } from "@/domain/repositories/UserRepository";
 import { toUserAvatarUrl } from "../dto/AuthenticatedUserDto";
 import type { PublicMemberProfileDto } from "../dto/PublicMemberProfileDto";
 import { NotFoundError, ValidationError } from "../errors";
+import { normalizeAndValidateUsername } from "../username";
 
-export async function resolveUserByNickname(
+export async function resolveUserByUsername(
   userRepository: UserRepository,
-  nickname: string
+  username: string
 ): Promise<User> {
-  const normalizedNickname = nickname.trim();
-  if (normalizedNickname.length === 0) {
-    throw new ValidationError("Nickname is required.");
-  }
-
-  const user = await userRepository.findByNickname(normalizedNickname);
+  const normalizedUsername = normalizeAndValidateUsername(username);
+  const user = await userRepository.findByUsername(normalizedUsername);
   if (!user) {
-    throw new NotFoundError(`Member not found: ${normalizedNickname}`);
+    throw new NotFoundError(`Member not found: ${normalizedUsername}`);
   }
 
   return user;
@@ -65,7 +62,7 @@ export async function buildPublicMemberProfile(
 
   return {
     userId: input.user.id,
-    nickname: input.user.nickname,
+    username: input.user.username,
     avatarUrl: toUserAvatarUrl(input.user),
     bio: input.user.bio,
     joinedAt: input.user.createdAt,

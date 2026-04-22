@@ -4,26 +4,26 @@ import type { UserRepository } from "@/domain/repositories/UserRepository";
 import type { PublicMemberProfileDto } from "../dto/PublicMemberProfileDto";
 import {
   buildPublicMemberProfile,
-  resolveUserByNickname,
+  resolveUserByUsername,
 } from "./member-profile-support";
 
-export interface GetPublicUserProfileByNicknameInput {
-  nickname: string;
+export interface GetPublicUserProfileByUsernameInput {
+  username: string;
   viewerUserId: string | null;
 }
 
-export interface GetPublicUserProfileByNicknameDeps {
+export interface GetPublicUserProfileByUsernameDeps {
   userRepository: UserRepository;
   userFollowRepository: UserFollowRepository;
 }
 
-export function makeGetPublicUserProfileByNickname(
-  deps: GetPublicUserProfileByNicknameDeps
+export function makeGetPublicUserProfileByUsername(
+  deps: GetPublicUserProfileByUsernameDeps
 ) {
-  return async function getPublicUserProfileByNickname(
-    input: GetPublicUserProfileByNicknameInput
+  return async function getPublicUserProfileByUsername(
+    input: GetPublicUserProfileByUsernameInput
   ): Promise<PublicMemberProfileDto> {
-    const user = await resolveUserByNickname(deps.userRepository, input.nickname);
+    const user = await resolveUserByUsername(deps.userRepository, input.username);
 
     return buildPublicMemberProfile({
       followRepository: deps.userFollowRepository,
@@ -33,6 +33,6 @@ export function makeGetPublicUserProfileByNickname(
   };
 }
 
-export type GetPublicUserProfileByNickname = ReturnType<
-  typeof makeGetPublicUserProfileByNickname
+export type GetPublicUserProfileByUsername = ReturnType<
+  typeof makeGetPublicUserProfileByUsername
 >;

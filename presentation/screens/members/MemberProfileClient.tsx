@@ -35,7 +35,7 @@ function Avatar({ profile }: { profile: PublicMemberProfileDto }) {
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={profile.avatarUrl}
-        alt={`${profile.nickname} avatar`}
+        alt={`${profile.username} avatar`}
         className="size-24 rounded-2xl object-cover ring-1 ring-border sm:size-28"
       />
     );
@@ -43,7 +43,7 @@ function Avatar({ profile }: { profile: PublicMemberProfileDto }) {
 
   return (
     <div className="flex size-24 items-center justify-center rounded-2xl bg-muted text-3xl font-semibold text-foreground ring-1 ring-border sm:size-28">
-      {profile.nickname.slice(0, 1).toUpperCase()}
+      {profile.username.slice(0, 1).toUpperCase()}
     </div>
   );
 }
@@ -68,7 +68,7 @@ function FollowAction({
           Follow
         </Button>
         <Link
-          href={`/login?next=/members/${encodeURIComponent(profile.nickname)}`}
+          href={`/login?next=/members/${encodeURIComponent(profile.username)}`}
           className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
         >
           Sign in to follow this member
@@ -115,7 +115,7 @@ export function MemberProfileClient({
             <Avatar profile={profile} />
             <div className="space-y-2">
               <CardTitle className="text-3xl tracking-tight">
-                {profile.nickname}
+                {profile.username}
               </CardTitle>
               <CardDescription>Joined {joinedLabel}</CardDescription>
               <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">

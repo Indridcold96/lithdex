@@ -4,6 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type SubmitEvent } from "react";
 
+import {
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+} from "@/application/username";
 import { Alert, AlertDescription } from "@/presentation/ui/alert";
 import { Button } from "@/presentation/ui/button";
 import {
@@ -19,7 +23,7 @@ import { Label } from "@/presentation/ui/label";
 export function RegisterScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [nickname, setNickname] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -32,7 +36,7 @@ export function RegisterScreen() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, nickname, password }),
+        body: JSON.stringify({ email, username, password }),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as {
@@ -56,7 +60,7 @@ export function RegisterScreen() {
         <CardHeader>
           <CardTitle>Create an account</CardTitle>
           <CardDescription>
-            Your email is private. Your nickname is how others will see you.
+            Your email is private. Your username is your public handle.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -73,19 +77,19 @@ export function RegisterScreen() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="nickname">Nickname</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="nickname"
+                id="username"
                 type="text"
                 autoComplete="username"
                 required
-                minLength={2}
-                maxLength={32}
-                value={nickname}
-                onChange={(e) => setNickname(e.target.value)}
+                minLength={USERNAME_MIN_LENGTH}
+                maxLength={USERNAME_MAX_LENGTH}
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                2-32 characters. Letters, numbers, _ or -.
+                {USERNAME_MIN_LENGTH}-{USERNAME_MAX_LENGTH} characters. Lowercase letters, numbers, or underscores.
               </p>
             </div>
             <div className="flex flex-col gap-1.5">

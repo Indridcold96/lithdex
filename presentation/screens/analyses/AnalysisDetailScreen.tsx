@@ -137,7 +137,7 @@ function DetailHeader({
 }) {
   const title = detail.title ?? "Untitled analysis";
   const createdLabel = formatDate(new Date(detail.createdAt));
-  const ownerNickname = detail.owner?.nickname ?? "Unknown author";
+  const ownerUsername = detail.owner?.username ?? "Unknown author";
 
   return (
     <header className="flex flex-col gap-3 border-b border-border pb-6">
@@ -176,13 +176,13 @@ function DetailHeader({
         By{" "}
         {detail.owner ? (
           <Link
-            href={`/members/${encodeURIComponent(detail.owner.nickname)}`}
+            href={`/members/${encodeURIComponent(detail.owner.username)}`}
             className="font-medium text-foreground underline-offset-4 hover:underline"
           >
-            {ownerNickname}
+            {ownerUsername}
           </Link>
         ) : (
-          <span className="font-medium text-foreground">{ownerNickname}</span>
+          <span className="font-medium text-foreground">{ownerUsername}</span>
         )}
       </p>
 

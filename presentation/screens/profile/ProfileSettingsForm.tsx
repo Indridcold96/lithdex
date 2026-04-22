@@ -57,16 +57,16 @@ export function ProfileSettingsForm({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={user.avatarUrl}
-                  alt={`${user.nickname} avatar`}
+                  alt={`${user.username} avatar`}
                   className="size-28 rounded-full border border-border object-cover"
                 />
               ) : (
                 <div className="flex size-28 items-center justify-center rounded-full border border-dashed border-border bg-muted text-3xl font-semibold text-muted-foreground">
-                  {user.nickname.slice(0, 1).toUpperCase()}
+                  {user.username.slice(0, 1).toUpperCase()}
                 </div>
               )}
               <div className="text-center">
-                <p className="text-sm font-medium">{user.nickname}</p>
+                <p className="text-sm font-medium">{user.username}</p>
                 <p className="text-xs text-muted-foreground">
                   Public avatar shown with comments and other community surfaces.
                 </p>

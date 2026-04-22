@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import type { PublicMemberProfileDto } from "@/application/dto/PublicMemberProfileDto";
 import { NotFoundError } from "@/application/errors";
-import { makeGetPublicUserProfileByNickname } from "@/application/use-cases/get-public-user-profile-by-nickname";
+import { makeGetPublicUserProfileByUsername } from "@/application/use-cases/get-public-user-profile-by-username";
 import { getServerSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserFollowRepository } from "@/infrastructure/database/repositories/PrismaUserFollowRepository";
@@ -11,21 +11,21 @@ import { PrismaUserRepository } from "@/infrastructure/database/repositories/Pri
 import { MemberProfileClient } from "./MemberProfileClient";
 
 interface MemberProfileScreenProps {
-  nickname: string;
+  username: string;
 }
 
 async function loadProfile(
-  nickname: string,
+  username: string,
   viewerUserId: string | null
 ): Promise<PublicMemberProfileDto | null> {
-  const getPublicUserProfileByNickname = makeGetPublicUserProfileByNickname({
+  const getPublicUserProfileByUsername = makeGetPublicUserProfileByUsername({
     userRepository: new PrismaUserRepository(prisma),
     userFollowRepository: new PrismaUserFollowRepository(prisma),
   });
 
   try {
-    return await getPublicUserProfileByNickname({
-      nickname,
+    return await getPublicUserProfileByUsername({
+      username,
       viewerUserId,
     });
   } catch (error) {
@@ -38,10 +38,10 @@ async function loadProfile(
 }
 
 export async function MemberProfileScreen({
-  nickname,
+  username,
 }: MemberProfileScreenProps) {
   const viewerUserId = await getServerSessionUserId();
-  const profile = await loadProfile(nickname, viewerUserId);
+  const profile = await loadProfile(username, viewerUserId);
 
   if (!profile) {
     notFound();

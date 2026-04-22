@@ -5,12 +5,12 @@ import type { PublicMemberProfileDto } from "../dto/PublicMemberProfileDto";
 import { UnauthenticatedError, ValidationError } from "../errors";
 import {
   buildPublicMemberProfile,
-  resolveUserById,
+  resolveUserByUsername,
 } from "./member-profile-support";
 
 export interface FollowUserInput {
   actorUserId: string | null;
-  targetUserId: string;
+  username: string;
 }
 
 export interface FollowUserDeps {
@@ -26,9 +26,9 @@ export function makeFollowUser(deps: FollowUserDeps) {
       throw new UnauthenticatedError("Authentication required.");
     }
 
-    const targetUser = await resolveUserById(
+    const targetUser = await resolveUserByUsername(
       deps.userRepository,
-      input.targetUserId
+      input.username
     );
 
     if (targetUser.id === input.actorUserId) {
