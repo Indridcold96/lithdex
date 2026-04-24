@@ -5,6 +5,7 @@ import type { AnalysisFeedbackRepository } from "@/domain/repositories/AnalysisF
 import type { AnalysisImageRepository } from "@/domain/repositories/AnalysisImageRepository";
 import type { AnalysisInteractionRepository } from "@/domain/repositories/AnalysisInteractionRepository";
 import type { AnalysisTagRepository } from "@/domain/repositories/AnalysisTagRepository";
+import type { AnalysisTagSuggestionRepository } from "@/domain/repositories/AnalysisTagSuggestionRepository";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 import type { AnalysisResultRepository } from "@/domain/repositories/AnalysisResultRepository";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
@@ -15,6 +16,7 @@ import { toAnalysisDto } from "../dto/AnalysisDto";
 import { toAnalysisInteractionDto } from "../dto/AnalysisInteractionDto";
 import { toAnalysisResultDto } from "../dto/AnalysisResultDto";
 import { toAnalysisTagDto } from "../dto/AnalysisTagDto";
+import { toAnalysisTagSuggestionDto } from "../dto/AnalysisTagSuggestionDto";
 import { toPublicUserDto } from "../dto/AuthenticatedUserDto";
 import { NotFoundError } from "../errors";
 
@@ -31,6 +33,7 @@ export interface GetAnalysisDetailDeps {
   analysisResultRepository: AnalysisResultRepository;
   analysisInteractionRepository: AnalysisInteractionRepository;
   analysisTagRepository: AnalysisTagRepository;
+  analysisTagSuggestionRepository: AnalysisTagSuggestionRepository;
   userRepository: UserRepository;
 }
 
@@ -48,7 +51,17 @@ export function makeGetAnalysisDetail(deps: GetAnalysisDetailDeps) {
       throw new NotFoundError(`Analysis not found: ${input.id}`);
     }
 
-    const [images, comments, feedbackSummary, result, interactions, tags] =
+    const isOwner = analysis.userId !== null && analysis.userId === input.viewerUserId;
+
+    const [
+      images,
+      comments,
+      feedbackSummary,
+      result,
+      interactions,
+      tags,
+      pendingSuggestions,
+    ] =
       await Promise.all([
         deps.analysisImageRepository.listByAnalysisId(analysis.id),
         deps.analysisCommentRepository.listByAnalysisId(analysis.id),
@@ -56,6 +69,11 @@ export function makeGetAnalysisDetail(deps: GetAnalysisDetailDeps) {
         deps.analysisResultRepository.findByAnalysisId(analysis.id),
         deps.analysisInteractionRepository.listByAnalysisId(analysis.id),
         deps.analysisTagRepository.listByAnalysisId(analysis.id),
+        isOwner
+          ? deps.analysisTagSuggestionRepository.listPendingByAnalysisId(
+              analysis.id
+            )
+          : Promise.resolve([]),
       ]);
 
     const authorIds = new Set<string>();
@@ -64,6 +82,9 @@ export function makeGetAnalysisDetail(deps: GetAnalysisDetailDeps) {
     }
     if (analysis.userId) {
       authorIds.add(analysis.userId);
+    }
+    for (const suggestion of pendingSuggestions) {
+      authorIds.add(suggestion.suggestedByUserId);
     }
 
     const participants = await deps.userRepository.listByIds(
@@ -111,6 +132,13 @@ export function makeGetAnalysisDetail(deps: GetAnalysisDetailDeps) {
       },
       viewerFeedback: viewerFeedback ? viewerFeedback.type : null,
       tags: tags.map(toAnalysisTagDto),
+      pendingTagSuggestions: pendingSuggestions.map((suggestion) => {
+        const suggestedBy = usersById.get(suggestion.suggestedByUserId);
+        return toAnalysisTagSuggestionDto(
+          suggestion,
+          suggestedBy ? toPublicUserDto(suggestedBy) : null
+        );
+      }),
       interactions: publicInteractions,
     };
   };

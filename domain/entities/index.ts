@@ -7,6 +7,7 @@ export * from "./AnalysisInteraction";
 export * from "./AnalysisResult";
 export * from "./Tag";
 export * from "./AnalysisTag";
+export * from "./AnalysisTagSuggestion";
 export * from "./AnalysisComment";
 export * from "./AnalysisFeedback";
 export * from "./UserFollow";

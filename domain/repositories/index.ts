@@ -6,5 +6,6 @@ export * from "./AnalysisInteractionRepository";
 export * from "./AnalysisResultRepository";
 export * from "./TagRepository";
 export * from "./AnalysisTagRepository";
+export * from "./AnalysisTagSuggestionRepository";
 export * from "./UserRepository";
 export * from "./UserFollowRepository";

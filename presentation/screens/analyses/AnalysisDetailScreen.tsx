@@ -14,6 +14,7 @@ import { PrismaAnalysisInteractionRepository } from "@/infrastructure/database/r
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
 import { PrismaAnalysisResultRepository } from "@/infrastructure/database/repositories/PrismaAnalysisResultRepository";
 import { PrismaAnalysisTagRepository } from "@/infrastructure/database/repositories/PrismaAnalysisTagRepository";
+import { PrismaAnalysisTagSuggestionRepository } from "@/infrastructure/database/repositories/PrismaAnalysisTagSuggestionRepository";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
 import {
   Card,
@@ -30,6 +31,7 @@ import { AnalysisFeedbackActions } from "./AnalysisFeedbackActions";
 import { AnalysisGallery } from "./AnalysisGallery";
 import { AnalysisPublicInteractions } from "./AnalysisPublicInteractions";
 import { AnalysisStatusBadge } from "./AnalysisStatusBadge";
+import { AnalysisTagsPanel } from "./AnalysisTagsPanel";
 import { AnalysisVisibilityActions } from "./AnalysisVisibilityActions";
 
 interface AnalysisDetailScreenProps {
@@ -55,6 +57,8 @@ async function loadDetail(
       prisma
     ),
     analysisTagRepository: new PrismaAnalysisTagRepository(prisma),
+    analysisTagSuggestionRepository:
+      new PrismaAnalysisTagSuggestionRepository(prisma),
     userRepository: new PrismaUserRepository(prisma),
   });
 
@@ -97,6 +101,15 @@ function DetailBody({ detail, viewerUserId }: DetailContext) {
       <AnalysisGallery images={detail.images} />
 
       {detail.result ? <ResultBlock detail={detail} /> : null}
+
+      <AnalysisTagsPanel
+        analysisId={detail.id}
+        isPublic={isPublic}
+        isOwner={isOwner}
+        isAuthenticated={viewerUserId !== null}
+        initialTags={detail.tags}
+        initialPendingSuggestions={detail.pendingTagSuggestions}
+      />
 
       {detail.interactions.length > 0 ? (
         <Card>
@@ -187,19 +200,6 @@ function DetailHeader({
           <span className="font-medium text-foreground">{ownerUsername}</span>
         )}
       </p>
-
-      {detail.tags.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {detail.tags.map((tag) => (
-            <span
-              key={tag.id}
-              className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
-            >
-              {tag.name}
-            </span>
-          ))}
-        </div>
-      ) : null}
 
       <div className="text-sm">
         <Link

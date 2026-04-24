@@ -10,6 +10,7 @@ import { PrismaAnalysisInteractionRepository } from "@/infrastructure/database/r
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
 import { PrismaAnalysisResultRepository } from "@/infrastructure/database/repositories/PrismaAnalysisResultRepository";
 import { PrismaAnalysisTagRepository } from "@/infrastructure/database/repositories/PrismaAnalysisTagRepository";
+import { PrismaAnalysisTagSuggestionRepository } from "@/infrastructure/database/repositories/PrismaAnalysisTagSuggestionRepository";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
@@ -34,6 +35,8 @@ export async function GET(request: NextRequest, ctx: RouteContext) {
         prisma
       ),
       analysisTagRepository: new PrismaAnalysisTagRepository(prisma),
+      analysisTagSuggestionRepository:
+        new PrismaAnalysisTagSuggestionRepository(prisma),
       userRepository: new PrismaUserRepository(prisma),
     });
 

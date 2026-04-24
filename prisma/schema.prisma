@@ -23,6 +23,8 @@ model User {
   feedback AnalysisFeedback[]
   following UserFollow[]      @relation("UserFollowFollower")
   followers UserFollow[]      @relation("UserFollowFollowed")
+  suggestedAnalysisTags AnalysisTagSuggestion[] @relation("AnalysisTagSuggestionSuggestedBy")
+  reviewedAnalysisTagSuggestions AnalysisTagSuggestion[] @relation("AnalysisTagSuggestionReviewedBy")
 }
 
 model UserFollow {
@@ -85,6 +87,7 @@ model Analysis {
   interactions AnalysisInteraction[]
   result       AnalysisResult?
   tags         AnalysisTag[]
+  tagSuggestions AnalysisTagSuggestion[]
   comments     AnalysisComment[]
   feedback     AnalysisFeedback[]
 
@@ -146,6 +149,7 @@ model Tag {
   updatedAt DateTime @updatedAt
 
   analyses AnalysisTag[]
+  suggestions AnalysisTagSuggestion[]
 }
 
 model AnalysisTag {
@@ -159,6 +163,28 @@ model AnalysisTag {
 
   @@id([analysisId, tagId])
   @@index([tagId])
+}
+
+model AnalysisTagSuggestion {
+  id               String   @id @default(cuid())
+  analysisId       String
+  tagId            String
+  suggestedByUserId String
+  status           String
+  reviewedByUserId String?
+  reviewedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  analysis         Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  tag              Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  suggestedByUser  User     @relation("AnalysisTagSuggestionSuggestedBy", fields: [suggestedByUserId], references: [id], onDelete: Cascade)
+  reviewedByUser   User?    @relation("AnalysisTagSuggestionReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([analysisId, status])
+  @@index([tagId])
+  @@index([suggestedByUserId])
+  @@index([reviewedByUserId])
 }
 
 model AnalysisComment {
