@@ -4,6 +4,7 @@ import type { AnalysisCommentRepository } from "@/domain/repositories/AnalysisCo
 import type { AnalysisFeedbackRepository } from "@/domain/repositories/AnalysisFeedbackRepository";
 import type { AnalysisImageRepository } from "@/domain/repositories/AnalysisImageRepository";
 import type { AnalysisInteractionRepository } from "@/domain/repositories/AnalysisInteractionRepository";
+import type { AnalysisTagRepository } from "@/domain/repositories/AnalysisTagRepository";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 import type { AnalysisResultRepository } from "@/domain/repositories/AnalysisResultRepository";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
@@ -13,6 +14,7 @@ import type { AnalysisDetailDto } from "../dto/AnalysisDetailDto";
 import { toAnalysisDto } from "../dto/AnalysisDto";
 import { toAnalysisInteractionDto } from "../dto/AnalysisInteractionDto";
 import { toAnalysisResultDto } from "../dto/AnalysisResultDto";
+import { toAnalysisTagDto } from "../dto/AnalysisTagDto";
 import { toPublicUserDto } from "../dto/AuthenticatedUserDto";
 import { NotFoundError } from "../errors";
 
@@ -28,6 +30,7 @@ export interface GetAnalysisDetailDeps {
   analysisFeedbackRepository: AnalysisFeedbackRepository;
   analysisResultRepository: AnalysisResultRepository;
   analysisInteractionRepository: AnalysisInteractionRepository;
+  analysisTagRepository: AnalysisTagRepository;
   userRepository: UserRepository;
 }
 
@@ -45,13 +48,14 @@ export function makeGetAnalysisDetail(deps: GetAnalysisDetailDeps) {
       throw new NotFoundError(`Analysis not found: ${input.id}`);
     }
 
-    const [images, comments, feedbackSummary, result, interactions] =
+    const [images, comments, feedbackSummary, result, interactions, tags] =
       await Promise.all([
         deps.analysisImageRepository.listByAnalysisId(analysis.id),
         deps.analysisCommentRepository.listByAnalysisId(analysis.id),
         deps.analysisFeedbackRepository.countByType(analysis.id),
         deps.analysisResultRepository.findByAnalysisId(analysis.id),
         deps.analysisInteractionRepository.listByAnalysisId(analysis.id),
+        deps.analysisTagRepository.listByAnalysisId(analysis.id),
       ]);
 
     const authorIds = new Set<string>();
@@ -106,6 +110,7 @@ export function makeGetAnalysisDetail(deps: GetAnalysisDetailDeps) {
         disputeCount: feedbackSummary.dispute,
       },
       viewerFeedback: viewerFeedback ? viewerFeedback.type : null,
+      tags: tags.map(toAnalysisTagDto),
       interactions: publicInteractions,
     };
   };

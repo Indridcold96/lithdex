@@ -41,6 +41,7 @@ export type AIAnalysisResponse =
       confidence: number | null;
       explanation: string;
       alternatives: AIAnalysisAlternative[];
+      tags?: string[];
       rawProviderOutput: unknown;
     }
   | {

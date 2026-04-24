@@ -13,6 +13,7 @@ import { PrismaAnalysisImageRepository } from "@/infrastructure/database/reposit
 import { PrismaAnalysisInteractionRepository } from "@/infrastructure/database/repositories/PrismaAnalysisInteractionRepository";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
 import { PrismaAnalysisResultRepository } from "@/infrastructure/database/repositories/PrismaAnalysisResultRepository";
+import { PrismaAnalysisTagRepository } from "@/infrastructure/database/repositories/PrismaAnalysisTagRepository";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
 import {
   Card,
@@ -53,6 +54,7 @@ async function loadDetail(
     analysisInteractionRepository: new PrismaAnalysisInteractionRepository(
       prisma
     ),
+    analysisTagRepository: new PrismaAnalysisTagRepository(prisma),
     userRepository: new PrismaUserRepository(prisma),
   });
 
@@ -185,6 +187,19 @@ function DetailHeader({
           <span className="font-medium text-foreground">{ownerUsername}</span>
         )}
       </p>
+
+      {detail.tags.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {detail.tags.map((tag) => (
+            <span
+              key={tag.id}
+              className="rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+            >
+              {tag.name}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       <div className="text-sm">
         <Link

@@ -4,6 +4,7 @@ import type { AnalysisCommentDto } from "./AnalysisCommentDto";
 import type { AnalysisDto } from "./AnalysisDto";
 import type { AnalysisInteractionDto } from "./AnalysisInteractionDto";
 import type { AnalysisResultDto } from "./AnalysisResultDto";
+import type { AnalysisTagDto } from "./AnalysisTagDto";
 import type { PublicUserDto } from "./AuthenticatedUserDto";
 
 export interface AnalysisFeedbackSummaryDto {
@@ -17,6 +18,7 @@ export interface AnalysisDetailDto extends AnalysisDto {
   comments: AnalysisCommentDto[];
   feedbackSummary: AnalysisFeedbackSummaryDto;
   viewerFeedback: AnalysisFeedbackType | null;
+  tags: AnalysisTagDto[];
   // Only meaningful, user-facing interactions (no system noise, no raw uploads).
   interactions: AnalysisInteractionDto[];
 }

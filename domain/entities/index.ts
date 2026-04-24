@@ -5,6 +5,8 @@ export * from "./Analysis";
 export * from "./AnalysisImage";
 export * from "./AnalysisInteraction";
 export * from "./AnalysisResult";
+export * from "./Tag";
+export * from "./AnalysisTag";
 export * from "./AnalysisComment";
 export * from "./AnalysisFeedback";
 export * from "./UserFollow";

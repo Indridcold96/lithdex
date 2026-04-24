@@ -84,6 +84,7 @@ model Analysis {
   images       AnalysisImage[]
   interactions AnalysisInteraction[]
   result       AnalysisResult?
+  tags         AnalysisTag[]
   comments     AnalysisComment[]
   feedback     AnalysisFeedback[]
 
@@ -135,6 +136,29 @@ model AnalysisResult {
   primaryMineral Mineral? @relation(fields: [primaryMineralId], references: [id], onDelete: SetNull)
 
   @@index([primaryMineralId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  analyses AnalysisTag[]
+}
+
+model AnalysisTag {
+  analysisId String
+  tagId      String
+  sourceType String
+  createdAt  DateTime @default(now())
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  tag      Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([analysisId, tagId])
+  @@index([tagId])
 }
 
 model AnalysisComment {

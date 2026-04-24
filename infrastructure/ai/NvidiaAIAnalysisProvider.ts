@@ -18,6 +18,7 @@ const NormalizedResponseSchema = z.discriminatedUnion("kind", [
     primary_mineral_name: z.string().nullable().optional(),
     confidence: z.number().min(0).max(1).nullable().optional(),
     explanation: z.string().min(1),
+    tags: z.array(z.string().min(1)).max(5).optional(),
     alternatives: z
       .array(
         z.object({
@@ -79,6 +80,7 @@ Schema by kind:
   "primary_mineral_name": "common mineral name or null if unknown",
   "confidence": number between 0 and 1 or null,
   "explanation": "concise technical explanation of how the identification was reached",
+  "tags": ["up to 5 short discovery tags if useful"],
   "alternatives": [
     { "name": "mineral name", "confidence": number 0..1 or null }
   ]
@@ -124,7 +126,8 @@ Use when neither more images nor more clarifications will realistically resolve 
 
 Follow-up discipline:
 - Do not repeat question categories or image requests that were already asked earlier in the analysis.
-- If the prior interactions show repeated attempts without enough new evidence, prefer "inconclusive" over another repetitive follow-up.`;
+- If the prior interactions show repeated attempts without enough new evidence, prefer "inconclusive" over another repetitive follow-up.
+- For "final", you may include a small "tags" array with short discovery tags. Prefer concise mineral, family, or specimen-trait tags. Omit the field if there are no good tags.`;
 
 interface ChatMessageContentText {
   type: "text";
@@ -303,6 +306,7 @@ export class NvidiaAIAnalysisProvider implements AIAnalysisProvider {
           primaryMineralName: parsed.primary_mineral_name ?? null,
           confidence: parsed.confidence ?? null,
           explanation: parsed.explanation,
+          tags: parsed.tags,
           alternatives: parsed.alternatives.map((a) => ({
             name: a.name,
             confidence: a.confidence ?? null,

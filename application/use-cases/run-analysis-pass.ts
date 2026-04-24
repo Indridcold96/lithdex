@@ -15,11 +15,14 @@ import {
 } from "@/domain/enums/AnalysisStatus";
 import type { AnalysisImageRepository } from "@/domain/repositories/AnalysisImageRepository";
 import type { AnalysisInteractionRepository } from "@/domain/repositories/AnalysisInteractionRepository";
+import type { AnalysisTagRepository } from "@/domain/repositories/AnalysisTagRepository";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 import type { AnalysisResultRepository } from "@/domain/repositories/AnalysisResultRepository";
+import type { TagRepository } from "@/domain/repositories/TagRepository";
 import { shouldPublishAnalysis } from "@/domain/rules/analysis";
 import type { FileStorage } from "@/domain/storage/FileStorage";
 
+import { applySystemAnalysisTags } from "../tags/system-analysis-tags";
 import { toAnalysisInteractionDto } from "../dto/AnalysisInteractionDto";
 import type { AnalysisRunOutcomeDto } from "../dto/AnalysisRunOutcomeDto";
 import { toAnalysisResultDto } from "../dto/AnalysisResultDto";
@@ -43,6 +46,8 @@ export interface RunAnalysisPassDeps {
   analysisImageRepository: AnalysisImageRepository;
   analysisInteractionRepository: AnalysisInteractionRepository;
   analysisResultRepository: AnalysisResultRepository;
+  analysisTagRepository: AnalysisTagRepository;
+  tagRepository: TagRepository;
   aiAnalysisProvider: AIAnalysisProvider;
   fileStorage: FileStorage;
   prepareImages: (
@@ -405,6 +410,17 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
             rawProviderOutput: response.rawProviderOutput,
           },
         });
+
+        await applySystemAnalysisTags(
+          {
+            analysisTagRepository: deps.analysisTagRepository,
+            tagRepository: deps.tagRepository,
+          },
+          {
+            analysisId: analysis.id,
+            rawTags: response.tags,
+          }
+        );
 
         await persistStatus(analysis.id, AnalysisStatus.COMPLETED);
 

@@ -15,6 +15,8 @@ import { PrismaAnalysisImageRepository } from "@/infrastructure/database/reposit
 import { PrismaAnalysisInteractionRepository } from "@/infrastructure/database/repositories/PrismaAnalysisInteractionRepository";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
 import { PrismaAnalysisResultRepository } from "@/infrastructure/database/repositories/PrismaAnalysisResultRepository";
+import { PrismaAnalysisTagRepository } from "@/infrastructure/database/repositories/PrismaAnalysisTagRepository";
+import { PrismaTagRepository } from "@/infrastructure/database/repositories/PrismaTagRepository";
 import { errorToResponse } from "@/infrastructure/http/responses";
 import { GcpFileStorage } from "@/infrastructure/storage/GcpFileStorage";
 import { buildAnalysisImageStorageKey } from "@/infrastructure/storage/keys";
@@ -106,6 +108,8 @@ export async function POST(request: NextRequest, ctx: RouteContext) {
         analysisImageRepository,
         analysisInteractionRepository,
         analysisResultRepository: new PrismaAnalysisResultRepository(prisma),
+        analysisTagRepository: new PrismaAnalysisTagRepository(prisma),
+        tagRepository: new PrismaTagRepository(prisma),
         aiAnalysisProvider: new NvidiaAIAnalysisProvider(),
         fileStorage,
         prepareImages: prepareAnalysisImagesForAi,

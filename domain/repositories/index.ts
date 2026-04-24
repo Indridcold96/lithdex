@@ -4,5 +4,7 @@ export * from "./AnalysisCommentRepository";
 export * from "./AnalysisFeedbackRepository";
 export * from "./AnalysisInteractionRepository";
 export * from "./AnalysisResultRepository";
+export * from "./TagRepository";
+export * from "./AnalysisTagRepository";
 export * from "./UserRepository";
 export * from "./UserFollowRepository";
