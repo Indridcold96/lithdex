@@ -13,6 +13,7 @@ export interface CreateAnalysisShellData {
 export interface ListPublicAnalysesOptions {
   limit?: number;
   cursor?: string;
+  searchQuery?: string;
 }
 
 export interface ListPublicAnalysesResult {

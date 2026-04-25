@@ -1,7 +1,10 @@
 import type { Analysis } from "@/domain/entities/Analysis";
 import type { AnalysisImage } from "@/domain/entities/AnalysisImage";
+import type { AnalysisTag } from "@/domain/entities/AnalysisTag";
 import type { AnalysisStatus } from "@/domain/enums/AnalysisStatus";
 import type { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
+
+import { type AnalysisTagDto, toAnalysisTagDto } from "./AnalysisTagDto";
 
 export interface AnalysisImageDto {
   id: string;
@@ -21,6 +24,7 @@ export interface AnalysisDto {
   createdAt: Date;
   updatedAt: Date;
   images: AnalysisImageDto[];
+  tags: AnalysisTagDto[];
 }
 
 export function buildInternalImageUrl(imageId: string): string {
@@ -39,7 +43,8 @@ export function toAnalysisImageDto(image: AnalysisImage): AnalysisImageDto {
 
 export function toAnalysisDto(
   analysis: Analysis,
-  images: AnalysisImage[]
+  images: AnalysisImage[],
+  tags: AnalysisTag[] = []
 ): AnalysisDto {
   const sorted = [...images].sort((a, b) => a.sortOrder - b.sortOrder);
   return {
@@ -52,5 +57,6 @@ export function toAnalysisDto(
     createdAt: analysis.createdAt,
     updatedAt: analysis.updatedAt,
     images: sorted.map(toAnalysisImageDto),
+    tags: tags.map(toAnalysisTagDto),
   };
 }

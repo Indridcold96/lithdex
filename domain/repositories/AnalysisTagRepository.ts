@@ -10,4 +10,5 @@ export interface AttachAnalysisTagData {
 export interface AnalysisTagRepository {
   attach(data: AttachAnalysisTagData): Promise<AnalysisTag>;
   listByAnalysisId(analysisId: string): Promise<AnalysisTag[]>;
+  listByAnalysisIds(analysisIds: string[]): Promise<AnalysisTag[]>;
 }

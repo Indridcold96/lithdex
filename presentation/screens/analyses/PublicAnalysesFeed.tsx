@@ -15,6 +15,7 @@ import {
 interface PublicAnalysesFeedProps {
   initialPage: PublicAnalysesPageDto;
   limit: number;
+  searchQuery?: string;
 }
 
 function formatDate(date: Date): string {
@@ -28,11 +29,13 @@ function formatDate(date: Date): string {
 export function PublicAnalysesFeed({
   initialPage,
   limit,
+  searchQuery,
 }: PublicAnalysesFeedProps) {
   const { items, hasMore, loading, error, sentinelRef } =
     useInfinitePublicAnalyses({
       initialPage,
       limit,
+      searchQuery,
     });
 
   return (
@@ -88,6 +91,18 @@ function AnalysisCard({ analysis }: { analysis: AnalysisDto }) {
           <CardTitle className="text-base">
             {analysis.title ?? "Untitled analysis"}
           </CardTitle>
+          {analysis.tags.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {analysis.tags.slice(0, 3).map((tag) => (
+                <span
+                  key={tag.slug}
+                  className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground"
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          ) : null}
           <CardDescription>{createdLabel}</CardDescription>
         </CardHeader>
       </Card>

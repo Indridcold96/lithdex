@@ -71,4 +71,16 @@ export class PrismaAnalysisTagRepository implements AnalysisTagRepository {
 
     return rows.map(toDomain);
   }
+
+  async listByAnalysisIds(analysisIds: string[]): Promise<AnalysisTag[]> {
+    if (analysisIds.length === 0) return [];
+
+    const rows = await this.prisma.analysisTag.findMany({
+      where: { analysisId: { in: analysisIds } },
+      include: { tag: true },
+      orderBy: [{ analysisId: "asc" }, { createdAt: "asc" }],
+    });
+
+    return rows.map(toDomain);
+  }
 }

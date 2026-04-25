@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@/generated/prisma/client";
+import type { Prisma, PrismaClient } from "@/generated/prisma/client";
 
 import type { Analysis } from "@/domain/entities/Analysis";
 import { AnalysisStatus } from "@/domain/enums/AnalysisStatus";
@@ -39,14 +39,41 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
   async listPublic(
     options: ListPublicAnalysesOptions = {}
   ): Promise<ListPublicAnalysesResult> {
-    const { limit, cursor } = options;
+    const { limit, cursor, searchQuery } = options;
     const take = typeof limit === "number" ? limit + 1 : undefined;
+    const searchFilter: Prisma.AnalysisWhereInput | null = searchQuery
+      ? {
+          OR: [
+            { title: { contains: searchQuery, mode: "insensitive" } },
+            {
+              user: {
+                is: {
+                  username: { contains: searchQuery, mode: "insensitive" },
+                },
+              },
+            },
+            {
+              tags: {
+                some: {
+                  tag: {
+                    OR: [
+                      { name: { contains: searchQuery, mode: "insensitive" } },
+                      { slug: { contains: searchQuery, mode: "insensitive" } },
+                    ],
+                  },
+                },
+              },
+            },
+          ],
+        }
+      : null;
 
     const rows = await this.prisma.analysis.findMany({
       where: {
         visibility: AnalysisVisibility.PUBLIC,
         status: AnalysisStatus.COMPLETED,
         publishedAt: { not: null },
+        ...(searchFilter ? { AND: [searchFilter] } : {}),
       },
       orderBy: [
         { publishedAt: "desc" },

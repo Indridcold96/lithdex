@@ -8,6 +8,7 @@ import type { PublicAnalysesPageDto } from "@/application/dto/PublicAnalysesPage
 interface UseInfinitePublicAnalysesInput {
   initialPage: PublicAnalysesPageDto;
   limit: number;
+  searchQuery?: string;
 }
 
 function mergeUniqueAnalyses(
@@ -23,6 +24,7 @@ function mergeUniqueAnalyses(
 export function useInfinitePublicAnalyses({
   initialPage,
   limit,
+  searchQuery,
 }: UseInfinitePublicAnalysesInput) {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [items, setItems] = useState(initialPage.items);
@@ -30,6 +32,13 @@ export function useInfinitePublicAnalyses({
   const [hasMore, setHasMore] = useState(initialPage.hasMore);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setItems(initialPage.items);
+    setNextCursor(initialPage.nextCursor);
+    setHasMore(initialPage.hasMore);
+    setError(null);
+  }, [initialPage]);
 
   const loadMoreEvent = useEffectEvent(() => {
     void loadMore();
@@ -66,6 +75,10 @@ export function useInfinitePublicAnalyses({
         limit: String(limit),
         cursor: nextCursor,
       });
+      const normalizedSearchQuery = searchQuery?.trim();
+      if (normalizedSearchQuery) {
+        params.set("q", normalizedSearchQuery);
+      }
       const res = await fetch(`/api/analyses/public?${params}`, {
         cache: "no-store",
       });
