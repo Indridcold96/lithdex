@@ -5,7 +5,7 @@ import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepositor
 import type { TagRepository } from "@/domain/repositories/TagRepository";
 import { canReceiveCommunityFeedback } from "@/domain/rules/analysis";
 
-import { normalizeCanonicalTag } from "../tags/normalize-canonical-tag";
+import { normalizeCanonicalTag } from "./tags/normalize-canonical-tag";
 import {
   ConflictError,
   ForbiddenError,

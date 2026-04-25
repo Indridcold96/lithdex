@@ -22,7 +22,7 @@ import type { TagRepository } from "@/domain/repositories/TagRepository";
 import { shouldPublishAnalysis } from "@/domain/rules/analysis";
 import type { FileStorage } from "@/domain/storage/FileStorage";
 
-import { applySystemAnalysisTags } from "../tags/system-analysis-tags";
+import { applySystemAnalysisTags } from "./tags/system-analysis-tags";
 import { toAnalysisInteractionDto } from "../dto/AnalysisInteractionDto";
 import type { AnalysisRunOutcomeDto } from "../dto/AnalysisRunOutcomeDto";
 import { toAnalysisResultDto } from "../dto/AnalysisResultDto";
