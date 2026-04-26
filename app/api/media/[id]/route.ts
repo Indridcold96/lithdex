@@ -41,10 +41,12 @@ export async function GET(request: NextRequest, ctx: RouteContext) {
 
     const headers = new Headers({
       "Content-Type": contentType,
+      "Content-Disposition": "inline",
       "Cache-Control":
         analysis.visibility === AnalysisVisibility.PUBLIC
           ? "public, max-age=3600"
           : "private, max-age=0, no-store",
+      "X-Content-Type-Options": "nosniff",
     });
     if (contentLength !== null) {
       headers.set("Content-Length", String(contentLength));
