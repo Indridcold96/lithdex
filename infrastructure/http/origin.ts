@@ -4,10 +4,15 @@ function firstHeaderValue(value: string | null): string | null {
   return value?.split(",")[0]?.trim() || null;
 }
 
+function isLocalHost(host: string): boolean {
+  const hostname = host.split(":")[0]?.toLowerCase();
+  return hostname === "localhost" || hostname === "127.0.0.1";
+}
+
 function getRequestOrigin(request: Request): string | null {
   const host =
-    firstHeaderValue(request.headers.get("x-forwarded-host")) ??
-    firstHeaderValue(request.headers.get("host"));
+    firstHeaderValue(request.headers.get("host")) ??
+    firstHeaderValue(request.headers.get("x-forwarded-host"));
   if (!host) {
     return null;
   }
@@ -15,8 +20,7 @@ function getRequestOrigin(request: Request): string | null {
   const forwardedProto = firstHeaderValue(
     request.headers.get("x-forwarded-proto")
   );
-  const fallbackProto = new URL(request.url).protocol.replace(/:$/, "");
-  const proto = forwardedProto || fallbackProto;
+  const proto = forwardedProto || (isLocalHost(host) ? "http" : "https");
 
   return new URL(`${proto}://${host}`).origin;
 }
