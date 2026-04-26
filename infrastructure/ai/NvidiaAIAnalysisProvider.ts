@@ -127,7 +127,13 @@ Use when neither more images nor more clarifications will realistically resolve 
 Follow-up discipline:
 - Do not repeat question categories or image requests that were already asked earlier in the analysis.
 - If the prior interactions show repeated attempts without enough new evidence, prefer "inconclusive" over another repetitive follow-up.
-- For "final", you may include a small "tags" array with short discovery tags. Prefer concise mineral, family, or specimen-trait tags. Omit the field if there are no good tags.`;
+- For "final", you may include a small "tags" array with short discovery tags. Prefer concise mineral, family, or specimen-trait tags. Omit the field if there are no good tags.
+
+Owner dispute handling:
+- A prior interaction with type "owner_result_dispute" means the analysis owner disputes the current AI result.
+- Treat the proposed identification and reason as evidence to evaluate, not as automatically true.
+- Reconsider the identification using the images, prior guided history, and the owner-supplied context.
+- You may agree, disagree, remain inconclusive, or ask for genuinely useful additional input using the same structured output schema.`;
 
 interface ChatMessageContentText {
   type: "text";
@@ -272,7 +278,7 @@ export class NvidiaAIAnalysisProvider implements AIAnalysisProvider {
     }
 
     if (!response.ok) {
-      // Don't leak raw provider body — the status code is usually enough.
+      // Don't leak raw provider body; the status code is usually enough.
       throw new AIProviderError(
         `AI provider rejected the request (HTTP ${response.status}).`
       );

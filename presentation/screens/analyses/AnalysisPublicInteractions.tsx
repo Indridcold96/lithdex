@@ -13,6 +13,8 @@ const TYPE_LABEL: Record<string, string> = {
     "AI preliminary assessment",
   [AnalysisInteractionType.ASSISTANT_FINAL_SUMMARY]: "AI final summary",
   [AnalysisInteractionType.USER_FOLLOWUP_ANSWER]: "User clarification",
+  [AnalysisInteractionType.OWNER_RESULT_DISPUTE]:
+    "Owner disputed the AI result",
 };
 
 function formatTimestamp(date: Date): string {
@@ -26,7 +28,7 @@ function formatTimestamp(date: Date): string {
 }
 
 // Rendered INSIDE a <Card><CardContent> on the public detail page.
-// This is intentionally NOT a chat bubble UI — each step is a structured row
+// This is intentionally NOT a chat bubble UI; each step is a structured row
 // with a type label so readers understand the flow.
 export function AnalysisPublicInteractions({
   interactions,
@@ -116,7 +118,7 @@ function InteractionContent({
               <span className="font-medium">{q.prompt}</span>
               {q.options && q.options.length > 0 ? (
                 <span className="text-xs text-muted-foreground">
-                  Options: {q.options.join(" • ")}
+                  Options: {q.options.join(" / ")}
                 </span>
               ) : null}
             </li>
@@ -147,6 +149,35 @@ function InteractionContent({
           </li>
         ))}
       </ul>
+    );
+  }
+
+  if (
+    interactionType === AnalysisInteractionType.OWNER_RESULT_DISPUTE &&
+    metadata &&
+    typeof metadata === "object" &&
+    "proposedIdentification" in metadata &&
+    "reason" in metadata
+  ) {
+    const dispute = metadata as {
+      proposedIdentification: unknown;
+      reason: unknown;
+    };
+    const proposedIdentification =
+      typeof dispute.proposedIdentification === "string"
+        ? dispute.proposedIdentification
+        : "";
+    const reason = typeof dispute.reason === "string" ? dispute.reason : "";
+
+    return (
+      <div className="space-y-2 text-sm">
+        <p className="font-medium">
+          Proposed identification: {proposedIdentification}
+        </p>
+        <p className="whitespace-pre-wrap text-muted-foreground">
+          Reason: {reason}
+        </p>
+      </div>
     );
   }
 

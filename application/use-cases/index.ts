@@ -12,6 +12,7 @@ export * from "./upload-followup-images";
 export * from "./add-analysis-comment";
 export * from "./update-analysis-comment";
 export * from "./delete-analysis-comment";
+export * from "./dispute-analysis-result-and-run";
 export * from "./add-analysis-feedback";
 export * from "./suggest-analysis-tag";
 export * from "./accept-analysis-tag-suggestion";

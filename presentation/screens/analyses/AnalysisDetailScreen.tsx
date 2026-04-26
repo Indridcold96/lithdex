@@ -30,6 +30,7 @@ import { AnalysisCommentsBlock } from "./AnalysisCommentsBlock";
 import { AnalysisFeedbackActions } from "./AnalysisFeedbackActions";
 import { AnalysisGallery } from "./AnalysisGallery";
 import { AnalysisPublicInteractions } from "./AnalysisPublicInteractions";
+import { AnalysisResultDisputeForm } from "./AnalysisResultDisputeForm";
 import { AnalysisStatusBadge } from "./AnalysisStatusBadge";
 import { AnalysisTagsPanel } from "./AnalysisTagsPanel";
 import { AnalysisVisibilityActions } from "./AnalysisVisibilityActions";
@@ -101,6 +102,12 @@ function DetailBody({ detail, viewerUserId }: DetailContext) {
       <AnalysisGallery images={detail.images} />
 
       {detail.result ? <ResultBlock detail={detail} /> : null}
+
+      <AnalysisResultDisputeForm
+        analysisId={detail.id}
+        status={detail.status}
+        isOwner={isOwner}
+      />
 
       <AnalysisTagsPanel
         analysisId={detail.id}

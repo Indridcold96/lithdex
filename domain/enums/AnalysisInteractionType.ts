@@ -26,6 +26,11 @@ export const AnalysisInteractionType = {
   // metadataJson: { imageIds: string[], count: number }
   USER_FOLLOWUP_UPLOAD: "user_followup_upload",
 
+  // The owner disputed the current AI result and supplied structured context
+  // for a guided reanalysis.
+  // metadataJson: { proposedIdentification: string, reason: string }
+  OWNER_RESULT_DISPUTE: "owner_result_dispute",
+
   // System-only telemetry: lifecycle, provider errors, etc. Never shown publicly.
   // metadataJson: { event: string, detail?: unknown }
   SYSTEM_STATUS: "system_status",
@@ -40,6 +45,7 @@ const PUBLIC_INTERACTION_TYPES = new Set<AnalysisInteractionType>([
   AnalysisInteractionType.ASSISTANT_PRELIMINARY_ASSESSMENT,
   AnalysisInteractionType.ASSISTANT_FINAL_SUMMARY,
   AnalysisInteractionType.USER_FOLLOWUP_ANSWER,
+  AnalysisInteractionType.OWNER_RESULT_DISPUTE,
 ]);
 
 // Interactions that are safe to render on a public analysis detail page.
