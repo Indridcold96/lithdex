@@ -46,7 +46,6 @@ export async function GET(request: NextRequest, ctx: RouteContext) {
         analysis.visibility === AnalysisVisibility.PUBLIC
           ? "public, max-age=3600"
           : "private, max-age=0, no-store",
-      "X-Content-Type-Options": "nosniff",
     });
     if (contentLength !== null) {
       headers.set("Content-Length", String(contentLength));

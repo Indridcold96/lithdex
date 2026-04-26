@@ -32,7 +32,6 @@ export async function GET(_request: NextRequest, ctx: RouteContext) {
       "Content-Type": contentType,
       "Content-Disposition": "inline",
       "Cache-Control": "public, max-age=3600",
-      "X-Content-Type-Options": "nosniff",
     });
     if (contentLength !== null) {
       headers.set("Content-Length", String(contentLength));
