@@ -10,6 +10,7 @@ import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisFeedbackRepository } from "@/infrastructure/database/repositories/PrismaAnalysisFeedbackRepository";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { parseBody } from "@/infrastructure/http/request";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
@@ -30,6 +31,7 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, ctx: RouteContext) {
   try {
+    assertSameOriginRequest(request);
     const { id: analysisId } = await ctx.params;
     const userId = await requireSessionUserId(request);
 

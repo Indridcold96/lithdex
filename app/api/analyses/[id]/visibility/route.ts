@@ -6,6 +6,7 @@ import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { parseBody } from "@/infrastructure/http/request";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
@@ -21,6 +22,7 @@ interface RouteContext {
 
 export async function PATCH(request: NextRequest, ctx: RouteContext) {
   try {
+    assertSameOriginRequest(request);
     const { id: analysisId } = await ctx.params;
     const requesterUserId = await requireSessionUserId(request);
     const input = await parseBody(request, SetAnalysisVisibilitySchema);

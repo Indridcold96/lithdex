@@ -7,6 +7,7 @@ import { makeUploadUserAvatar } from "@/application/use-cases/upload-user-avatar
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { errorToResponse } from "@/infrastructure/http/responses";
 import { GcpFileStorage } from "@/infrastructure/storage/GcpFileStorage";
 import { buildUserAvatarStorageKey } from "@/infrastructure/storage/keys";
@@ -19,6 +20,7 @@ function isFile(entry: FormDataEntryValue | null): entry is File {
 
 export async function POST(request: NextRequest) {
   try {
+    assertSameOriginRequest(request);
     const userId = await requireSessionUserId(request);
 
     let formData: FormData;

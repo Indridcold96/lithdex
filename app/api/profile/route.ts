@@ -6,6 +6,7 @@ import { makeUpdateCurrentUserProfile } from "@/application/use-cases/update-cur
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { parseBody } from "@/infrastructure/http/request";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
@@ -17,6 +18,7 @@ const UpdateProfileSchema = z.object({
 
 export async function PATCH(request: NextRequest) {
   try {
+    assertSameOriginRequest(request);
     const userId = await requireSessionUserId(request);
     const input = await parseBody(request, UpdateProfileSchema);
 

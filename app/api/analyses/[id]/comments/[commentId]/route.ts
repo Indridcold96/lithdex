@@ -9,6 +9,7 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisCommentRepository } from "@/infrastructure/database/repositories/PrismaAnalysisCommentRepository";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { parseBody } from "@/infrastructure/http/request";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
@@ -24,6 +25,7 @@ interface RouteContext {
 
 export async function PATCH(request: NextRequest, ctx: RouteContext) {
   try {
+    assertSameOriginRequest(request);
     const { id: analysisId, commentId } = await ctx.params;
     const actingUserId = await requireSessionUserId(request);
     const input = await parseBody(request, UpdateAnalysisCommentSchema);
@@ -57,6 +59,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
 
 export async function DELETE(request: NextRequest, ctx: RouteContext) {
   try {
+    assertSameOriginRequest(request);
     const { id: analysisId, commentId } = await ctx.params;
     const actingUserId = await requireSessionUserId(request);
 

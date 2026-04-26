@@ -6,6 +6,7 @@ import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserFollowRepository } from "@/infrastructure/database/repositories/PrismaUserFollowRepository";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
 export const runtime = "nodejs";
@@ -16,6 +17,7 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, ctx: RouteContext) {
   try {
+    assertSameOriginRequest(request);
     const { username } = await ctx.params;
     const actorUserId = await requireSessionUserId(request);
 
@@ -33,6 +35,7 @@ export async function POST(request: NextRequest, ctx: RouteContext) {
 
 export async function DELETE(request: NextRequest, ctx: RouteContext) {
   try {
+    assertSameOriginRequest(request);
     const { username } = await ctx.params;
     const actorUserId = await requireSessionUserId(request);
 

@@ -10,6 +10,7 @@ import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisImageRepository } from "@/infrastructure/database/repositories/PrismaAnalysisImageRepository";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { errorToResponse } from "@/infrastructure/http/responses";
 import { GcpFileStorage } from "@/infrastructure/storage/GcpFileStorage";
 import { buildAnalysisImageStorageKey } from "@/infrastructure/storage/keys";
@@ -61,6 +62,7 @@ function isFile(entry: FormDataEntryValue): entry is File {
 
 export async function POST(request: NextRequest) {
   try {
+    assertSameOriginRequest(request);
     const userId = await requireSessionUserId(request);
 
     let formData: FormData;

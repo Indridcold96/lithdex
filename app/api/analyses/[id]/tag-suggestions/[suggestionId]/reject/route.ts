@@ -5,6 +5,7 @@ import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";
 import { PrismaAnalysisTagSuggestionRepository } from "@/infrastructure/database/repositories/PrismaAnalysisTagSuggestionRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
 export const runtime = "nodejs";
@@ -15,6 +16,7 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, ctx: RouteContext) {
   try {
+    assertSameOriginRequest(request);
     const { id: analysisId, suggestionId } = await ctx.params;
     const reviewerUserId = await requireSessionUserId(request);
 

@@ -11,6 +11,7 @@ import { PrismaAnalysisTagRepository } from "@/infrastructure/database/repositor
 import { PrismaAnalysisTagSuggestionRepository } from "@/infrastructure/database/repositories/PrismaAnalysisTagSuggestionRepository";
 import { PrismaTagRepository } from "@/infrastructure/database/repositories/PrismaTagRepository";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { parseBody } from "@/infrastructure/http/request";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
@@ -26,6 +27,7 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, ctx: RouteContext) {
   try {
+    assertSameOriginRequest(request);
     const { id: analysisId } = await ctx.params;
     const userId = await requireSessionUserId(request);
     const input = await parseBody(request, SuggestAnalysisTagSchema);

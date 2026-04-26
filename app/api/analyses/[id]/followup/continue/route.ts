@@ -17,6 +17,7 @@ import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories
 import { PrismaAnalysisResultRepository } from "@/infrastructure/database/repositories/PrismaAnalysisResultRepository";
 import { PrismaAnalysisTagRepository } from "@/infrastructure/database/repositories/PrismaAnalysisTagRepository";
 import { PrismaTagRepository } from "@/infrastructure/database/repositories/PrismaTagRepository";
+import { assertSameOriginRequest } from "@/infrastructure/http/origin";
 import { errorToResponse } from "@/infrastructure/http/responses";
 import { GcpFileStorage } from "@/infrastructure/storage/GcpFileStorage";
 import { buildAnalysisImageStorageKey } from "@/infrastructure/storage/keys";
@@ -71,6 +72,7 @@ interface RouteContext {
 
 export async function POST(request: NextRequest, ctx: RouteContext) {
   try {
+    assertSameOriginRequest(request);
     const { id: analysisId } = await ctx.params;
     const requesterUserId = await requireSessionUserId(request);
 
