@@ -81,12 +81,25 @@ export function makeSuggestAnalysisTag(deps: SuggestAnalysisTagDeps) {
       );
     }
 
-    return deps.analysisTagSuggestionRepository.create({
-      analysisId: analysis.id,
-      tagId: canonical.id,
-      suggestedByUserId: input.userId,
-      status: AnalysisTagSuggestionStatus.PENDING,
-    });
+    try {
+      return await deps.analysisTagSuggestionRepository.create({
+        analysisId: analysis.id,
+        tagId: canonical.id,
+        suggestedByUserId: input.userId,
+        status: AnalysisTagSuggestionStatus.PENDING,
+      });
+    } catch (error) {
+      const pendingSuggestionAfterCreateFailure =
+        await deps.analysisTagSuggestionRepository.findPendingByAnalysisAndTag(
+          analysis.id,
+          canonical.id
+        );
+      if (pendingSuggestionAfterCreateFailure) {
+        throw new ConflictError("This tag is already pending review.");
+      }
+
+      throw error;
+    }
   };
 }
 
