@@ -3,11 +3,11 @@ import type { UserRepository } from "@/domain/repositories/UserRepository";
 import type { FileStorage } from "@/domain/storage/FileStorage";
 
 import {
-  isAllowedImageMimeType,
   MAX_IMAGE_BYTES,
   type AllowedImageMimeType,
 } from "../config/uploads";
 import { UnauthenticatedError, ValidationError } from "../errors";
+import { validateUploadedImage } from "../files/validate-uploaded-image";
 import type { UpdateCurrentUserProfile } from "./update-current-user-profile";
 
 export interface UploadUserAvatarFileInput {
@@ -38,9 +38,9 @@ function requireUser(user: User | null): User {
   return user;
 }
 
-function validateAvatarFile(
+async function validateAvatarFile(
   file: UploadUserAvatarFileInput | null
-): { file: UploadUserAvatarFileInput; mimeType: AllowedImageMimeType } {
+): Promise<{ file: UploadUserAvatarFileInput; mimeType: AllowedImageMimeType }> {
   if (!file) {
     throw new ValidationError("No avatar file was provided.");
   }
@@ -52,15 +52,9 @@ function validateAvatarFile(
       `Avatar exceeds the ${MAX_IMAGE_BYTES}-byte limit.`
     );
   }
-  if (!isAllowedImageMimeType(file.mimeType)) {
-    throw new ValidationError(
-      `Avatar has an unsupported mime type: ${file.mimeType}`
-    );
-  }
-
   return {
     file,
-    mimeType: file.mimeType,
+    mimeType: await validateUploadedImage(file, "Avatar"),
   };
 }
 
@@ -71,7 +65,7 @@ export function makeUploadUserAvatar(deps: UploadUserAvatarDeps) {
     const currentUser = requireUser(
       await deps.userRepository.findById(input.userId)
     );
-    const { file, mimeType } = validateAvatarFile(input.file);
+    const { file, mimeType } = await validateAvatarFile(input.file);
 
     const storageKey = deps.buildStorageKey({
       userId: input.userId,

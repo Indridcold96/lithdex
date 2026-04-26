@@ -6,7 +6,6 @@ import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepositor
 import type { FileStorage } from "@/domain/storage/FileStorage";
 
 import {
-  isAllowedImageMimeType,
   MAX_ANALYSIS_IMAGES,
   MAX_IMAGE_BYTES,
   MIN_ANALYSIS_IMAGES,
@@ -14,6 +13,7 @@ import {
 } from "../config/uploads";
 import { toAnalysisDto, type AnalysisDto } from "../dto/AnalysisDto";
 import { ValidationError } from "../errors";
+import { validateUploadedImage } from "../files/validate-uploaded-image";
 
 export interface UploadedFileInput {
   body: Buffer;
@@ -53,7 +53,9 @@ function parseVisibility(
   throw new ValidationError(`Unsupported visibility: ${String(value)}`);
 }
 
-function validateFiles(files: UploadedFileInput[]): AllowedImageMimeType[] {
+async function validateFiles(
+  files: UploadedFileInput[]
+): Promise<AllowedImageMimeType[]> {
   if (files.length < MIN_ANALYSIS_IMAGES) {
     throw new ValidationError(
       `An analysis requires at least ${MIN_ANALYSIS_IMAGES} images.`
@@ -65,7 +67,7 @@ function validateFiles(files: UploadedFileInput[]): AllowedImageMimeType[] {
     );
   }
 
-  return files.map((file, index) => {
+  return Promise.all(files.map(async (file, index) => {
     if (!file.size || file.body.length === 0) {
       throw new ValidationError(`images[${index}] is empty.`);
     }
@@ -74,13 +76,8 @@ function validateFiles(files: UploadedFileInput[]): AllowedImageMimeType[] {
         `images[${index}] exceeds the ${MAX_IMAGE_BYTES}-byte limit.`
       );
     }
-    if (!isAllowedImageMimeType(file.mimeType)) {
-      throw new ValidationError(
-        `images[${index}] has an unsupported mime type: ${file.mimeType}`
-      );
-    }
-    return file.mimeType;
-  });
+    return validateUploadedImage(file, `images[${index}]`);
+  }));
 }
 
 export function makeCreateAnalysisWithUploads(
@@ -90,7 +87,7 @@ export function makeCreateAnalysisWithUploads(
     input: CreateAnalysisWithUploadsInput
   ): Promise<AnalysisDto> {
     const visibility = parseVisibility(input.visibility);
-    const allowedMimes = validateFiles(input.files);
+    const allowedMimes = await validateFiles(input.files);
 
     const title = input.title?.trim() ? input.title.trim() : null;
 

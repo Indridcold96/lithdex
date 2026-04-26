@@ -12,7 +12,6 @@ import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepositor
 import type { FileStorage } from "@/domain/storage/FileStorage";
 
 import {
-  isAllowedImageMimeType,
   MAX_ANALYSIS_IMAGES,
   MAX_IMAGE_BYTES,
   type AllowedImageMimeType,
@@ -27,6 +26,7 @@ import {
   NotFoundError,
   ValidationError,
 } from "../errors";
+import { validateUploadedImage } from "../files/validate-uploaded-image";
 import type { UploadedFileInput } from "./create-analysis-with-uploads";
 
 export interface UploadFollowupImagesInput {
@@ -47,11 +47,13 @@ export interface UploadFollowupImagesDeps {
   }) => string;
 }
 
-function validateIncomingFiles(files: UploadedFileInput[]): AllowedImageMimeType[] {
+async function validateIncomingFiles(
+  files: UploadedFileInput[]
+): Promise<AllowedImageMimeType[]> {
   if (files.length === 0) {
     throw new ValidationError("No files were provided.");
   }
-  return files.map((file, index) => {
+  return Promise.all(files.map(async (file, index) => {
     if (!file.size || file.body.length === 0) {
       throw new ValidationError(`images[${index}] is empty.`);
     }
@@ -60,20 +62,15 @@ function validateIncomingFiles(files: UploadedFileInput[]): AllowedImageMimeType
         `images[${index}] exceeds the ${MAX_IMAGE_BYTES}-byte limit.`
       );
     }
-    if (!isAllowedImageMimeType(file.mimeType)) {
-      throw new ValidationError(
-        `images[${index}] has an unsupported mime type: ${file.mimeType}`
-      );
-    }
-    return file.mimeType;
-  });
+    return validateUploadedImage(file, `images[${index}]`);
+  }));
 }
 
 export function makeUploadFollowupImages(deps: UploadFollowupImagesDeps) {
   return async function uploadFollowupImages(
     input: UploadFollowupImagesInput
   ): Promise<AnalysisImageDto[]> {
-    const allowedMimes = validateIncomingFiles(input.files);
+    const allowedMimes = await validateIncomingFiles(input.files);
 
     const analysis = await deps.analysisRepository.findById(input.analysisId);
     if (!analysis) {
