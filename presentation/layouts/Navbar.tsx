@@ -7,7 +7,6 @@ import { Button } from "@/presentation/ui/button";
 const NAV_LINKS = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/analyses", label: "Analyses" },
-  { href: "/minerals", label: "Minerals" },
 ] as const;
 
 export async function Navbar() {

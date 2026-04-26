@@ -27,7 +27,7 @@ const FEATURES = [
     icon: Gem,
     title: "Built for collectors",
     description:
-      "Track analyses over time and curate a personal catalogue of the minerals you have studied.",
+      "Track analyses over time and build a traceable history of the specimens you have studied.",
   },
 ] as const;
 
@@ -63,7 +63,7 @@ export function HomeScreen() {
             size="lg"
             variant="outline"
             nativeButton={false}
-            render={<Link href="/minerals">Browse minerals</Link>}
+            render={<Link href="/analyses">Browse public analyses</Link>}
           />
         </div>
       </section>
