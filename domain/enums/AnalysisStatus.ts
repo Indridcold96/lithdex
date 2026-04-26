@@ -4,6 +4,7 @@ export const AnalysisStatus = {
   PROCESSING: "processing",
   NEEDS_INPUT: "needs_input",
   COMPLETED: "completed",
+  INCONCLUSIVE: "inconclusive",
   FAILED: "failed",
 } as const;
 
@@ -11,7 +12,11 @@ export type AnalysisStatus =
   (typeof AnalysisStatus)[keyof typeof AnalysisStatus];
 
 export function isTerminalStatus(status: AnalysisStatus | string): boolean {
-  return status === AnalysisStatus.COMPLETED || status === AnalysisStatus.FAILED;
+  return (
+    status === AnalysisStatus.COMPLETED ||
+    status === AnalysisStatus.INCONCLUSIVE ||
+    status === AnalysisStatus.FAILED
+  );
 }
 
 export function canStartOrContinue(status: AnalysisStatus | string): boolean {

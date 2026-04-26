@@ -492,11 +492,11 @@ export function makeRunAnalysisPass(deps: RunAnalysisPassDeps) {
           },
         });
 
-        await persistStatus(analysis.id, AnalysisStatus.FAILED);
+        await persistStatus(analysis.id, AnalysisStatus.INCONCLUSIVE);
 
         return {
           analysisId: analysis.id,
-          status: AnalysisStatus.FAILED,
+          status: AnalysisStatus.INCONCLUSIVE,
           kind: "inconclusive",
           assistantInteraction: toAnalysisInteractionDto(interaction),
           result: null,

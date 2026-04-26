@@ -80,7 +80,7 @@ export async function AnalysesScreen({ searchQuery }: AnalysesScreenProps) {
           <CardContent>
             <div className="flex h-48 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
               {hasSearch
-                ? "No public completed analyses matched this search."
+                ? "No published analyses matched this search."
                 : "Be the first to publish one."}
             </div>
           </CardContent>

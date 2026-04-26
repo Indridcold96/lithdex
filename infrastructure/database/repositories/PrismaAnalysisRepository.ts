@@ -71,8 +71,10 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
     const rows = await this.prisma.analysis.findMany({
       where: {
         visibility: AnalysisVisibility.PUBLIC,
-        status: AnalysisStatus.COMPLETED,
         publishedAt: { not: null },
+        status: {
+          in: [AnalysisStatus.COMPLETED, AnalysisStatus.INCONCLUSIVE],
+        },
         ...(searchFilter ? { AND: [searchFilter] } : {}),
       },
       orderBy: [

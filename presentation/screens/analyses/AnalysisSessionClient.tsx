@@ -149,7 +149,10 @@ export function AnalysisSessionClient({
         <ResultCard result={result} />
       ) : null}
 
-      {status === AnalysisStatus.FAILED ? <FailedCard session={session} /> : null}
+      {status === AnalysisStatus.INCONCLUSIVE ? (
+        <InconclusiveCard session={session} />
+      ) : null}
+      {status === AnalysisStatus.FAILED ? <FailedCard /> : null}
 
       <RunBlock status={status} running={running} onRun={run} />
 
@@ -222,11 +225,12 @@ function ResultCard({ result }: { result: AnalysisResultDto }) {
   );
 }
 
-function FailedCard({ session }: { session: AnalysisSessionDto }) {
+function InconclusiveCard({ session }: { session: AnalysisSessionDto }) {
   const latestFinal = findLatestInteractionOfType(
     session.interactions,
     AnalysisInteractionType.ASSISTANT_FINAL_SUMMARY
   );
+
   return (
     <Card>
       <CardHeader>
@@ -242,6 +246,19 @@ function FailedCard({ session }: { session: AnalysisSessionDto }) {
           </p>
         </CardContent>
       ) : null}
+    </Card>
+  );
+}
+
+function FailedCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Analysis failed</CardTitle>
+        <CardDescription>
+          The analysis could not be completed. You can retry it.
+        </CardDescription>
+      </CardHeader>
     </Card>
   );
 }

@@ -53,7 +53,7 @@ export function makeSetAnalysisVisibility(deps: SetAnalysisVisibilityDeps) {
       !canPublishAnalysis(analysis.status)
     ) {
       throw new ValidationError(
-        "Only completed analyses can be published to the public library."
+        "Only completed or inconclusive analyses can be published to the public library."
       );
     }
 

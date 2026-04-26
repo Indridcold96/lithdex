@@ -64,7 +64,10 @@ export function AnalysisVisibilityActions({
   const [error, setError] = useState<string | null>(null);
 
   const isPublic = visibility === AnalysisVisibility.PUBLIC;
-  const canPublish = isOwner && status === Status.COMPLETED && !isPublic;
+  const canPublish =
+    isOwner &&
+    (status === Status.COMPLETED || status === Status.INCONCLUSIVE) &&
+    !isPublic;
   const canUnpublish = isOwner && isPublic;
 
   async function submit(nextVisibility: AnalysisVisibilityValue) {
@@ -108,9 +111,9 @@ export function AnalysisVisibilityActions({
 
   const helperText = isPublic
     ? "This analysis is currently visible in the public library."
-    : status === Status.COMPLETED
-      ? "Publish this completed analysis to make it discoverable in the public library."
-      : "Only completed analyses can be published to the public library.";
+    : status === Status.COMPLETED || status === Status.INCONCLUSIVE
+      ? "Publish this analysis to make it discoverable in the public library."
+      : "Only completed or inconclusive analyses can be published to the public library.";
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-border/80 bg-card/80 p-4 shadow-sm">

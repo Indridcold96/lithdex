@@ -11,7 +11,8 @@ const STATUS_LABEL: Record<AnalysisStatus, string> = {
   [Status.PROCESSING]: "Analyzing",
   [Status.NEEDS_INPUT]: "Needs input",
   [Status.COMPLETED]: "Completed",
-  [Status.FAILED]: "Inconclusive",
+  [Status.INCONCLUSIVE]: "Inconclusive",
+  [Status.FAILED]: "Failed",
 };
 
 const STATUS_CLASSES: Record<AnalysisStatus, string> = {
@@ -19,6 +20,7 @@ const STATUS_CLASSES: Record<AnalysisStatus, string> = {
   [Status.NEEDS_INPUT]: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
   [Status.COMPLETED]:
     "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
+  [Status.INCONCLUSIVE]: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
   [Status.FAILED]: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
 };
 

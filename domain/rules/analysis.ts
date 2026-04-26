@@ -17,7 +17,9 @@ export function isAnalysisFinalized(
   status: AnalysisStatus | string
 ): boolean {
   return (
-    status === AnalysisStatus.COMPLETED || status === AnalysisStatus.FAILED
+    status === AnalysisStatus.COMPLETED ||
+    status === AnalysisStatus.INCONCLUSIVE ||
+    status === AnalysisStatus.FAILED
   );
 }
 
@@ -30,7 +32,10 @@ export function canRequestFollowUp(
 export function canPublishAnalysis(
   status: AnalysisStatus | string
 ): boolean {
-  return status === AnalysisStatus.COMPLETED;
+  return (
+    status === AnalysisStatus.COMPLETED ||
+    status === AnalysisStatus.INCONCLUSIVE
+  );
 }
 
 export function shouldPublishAnalysis(input: {
@@ -40,7 +45,7 @@ export function shouldPublishAnalysis(input: {
 }): boolean {
   return (
     input.visibility === AnalysisVisibility.PUBLIC &&
-    input.status === AnalysisStatus.COMPLETED &&
+    canPublishAnalysis(input.status) &&
     input.publishedAt === null
   );
 }
