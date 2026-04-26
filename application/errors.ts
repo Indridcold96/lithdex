@@ -30,6 +30,10 @@ export class ConflictError extends ApplicationError {
   override name = "ConflictError";
 }
 
+export class RateLimitError extends ApplicationError {
+  override name = "RateLimitError";
+}
+
 export class AIProviderError extends ApplicationError {
   override name = "AIProviderError";
 }

@@ -13,6 +13,7 @@ import { JoseSessionTokenService } from "@/infrastructure/auth/JoseSessionTokenS
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
 import { assertSameOriginRequest } from "@/infrastructure/http/origin";
+import { assertRateLimit } from "@/infrastructure/http/rate-limit";
 import { parseBody } from "@/infrastructure/http/request";
 import { errorToResponse } from "@/infrastructure/http/responses";
 
@@ -29,6 +30,11 @@ export async function POST(request: NextRequest) {
   try {
     assertSameOriginRequest(request);
     const input = await parseBody(request, RegisterSchema);
+    assertRateLimit(request, {
+      bucket: "auth:register",
+      limit: 5,
+      windowMs: 60_000,
+    });
 
     const userRepository = new PrismaUserRepository(prisma);
     const passwordHasher = new BcryptPasswordHasher();

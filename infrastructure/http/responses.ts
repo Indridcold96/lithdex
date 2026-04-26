@@ -8,6 +8,7 @@ import {
   ForbiddenError,
   InvalidCredentialsError,
   NotFoundError,
+  RateLimitError,
   UnauthenticatedError,
   ValidationError,
 } from "@/application/errors";
@@ -43,6 +44,9 @@ export function errorToResponse(error: unknown) {
   }
   if (error instanceof ConflictError) {
     return NextResponse.json({ error: error.message }, { status: 409 });
+  }
+  if (error instanceof RateLimitError) {
+    return NextResponse.json({ error: error.message }, { status: 429 });
   }
   if (error instanceof AIProviderError) {
     // Do not leak raw provider payloads; `message` is already sanitized by the
