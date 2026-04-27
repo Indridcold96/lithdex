@@ -1,6 +1,6 @@
 # Lithdex
 
-Lithdex is a guided mineral and gemstone identification platform built around an analysis session, not just a one-off AI answer. Users upload specimen images, work through a structured identification flow, keep a history of their own analyses, and optionally publish completed analyses to a public community library for comments and confirm/dispute feedback.
+Lithdex is a guided mineral and gemstone identification platform built around an analysis session, not just a one-off AI answer. Users upload specimen images, work through a structured identification flow, keep a history of their own analyses, and optionally publish completed or inconclusive analyses to a public community library for comments and confirm/dispute feedback.
 
 The current product is aimed at collectors, hobbyists, and anyone who wants a more traceable identification workflow. The guided session matters because the system can ask for clarification or more images before reaching a conclusion, instead of treating identification as a single prompt-response exchange.
 
@@ -11,8 +11,9 @@ The current product is aimed at collectors, hobbyists, and anyone who wants a mo
 - New analysis flow with image upload and initial public/private selection.
 - Owner-only guided analysis session for running and continuing an identification.
 - Follow-up flow when the system needs clarification answers or additional images.
+- Owner result dispute flow that records structured owner context and re-runs the guided analysis.
 - Persisted analysis detail pages with result, history, images, and owner metadata.
-- Public/private visibility management for completed analyses, including publish and unpublish behavior.
+- Public/private visibility management for completed and inconclusive analyses, including publish and unpublish behavior.
 - Public analyses feed that acts as the community library.
 - Community comments on public analyses, including edit/delete for the comment author.
 - Confirm/dispute feedback on public analyses.
@@ -52,15 +53,17 @@ The current analysis lifecycle is centered on an owner-controlled session:
 4. If the system needs more information, it can move the analysis into a follow-up state and request:
    clarification answers, additional images, or both.
 5. The owner continues the same session until the analysis reaches a terminal outcome.
+6. If the owner believes a completed or inconclusive result is wrong, they can submit a structured dispute with a proposed identification and evidence. That dispute is stored in the guided interaction history and triggers another server-side analysis pass through the same AI pipeline.
 
 The current status model in the codebase is:
 
 - `processing`
 - `needs_input`
 - `completed`
+- `inconclusive`
 - `failed`
 
-In the UI, `failed` is presented as an inconclusive outcome. The guided session remains owner-only even when an analysis is public.
+The guided session remains owner-only even when an analysis is public. `failed` represents a failed analysis run, while `inconclusive` represents a terminal AI outcome where the system could not identify the specimen from the available material.
 
 ## Visibility And Publication Semantics
 
@@ -69,18 +72,18 @@ Analyses can be private or public, but the public library has stricter semantics
 An analysis is treated as published for the library when all of the following are true:
 
 - `visibility = public`
-- `status = completed`
+- `status = completed` or `status = inconclusive`
 - `publishedAt != null`
 
 Current behavior:
 
-- Owners can publish a completed private analysis.
+- Owners can publish a completed or inconclusive private analysis.
 - Publishing sets visibility to public and populates `publishedAt` when needed.
 - Owners can make a public analysis private again.
 - Unpublishing sets visibility back to private and clears `publishedAt`.
-- Analyses that are not completed cannot be published to the public library.
+- Analyses that are not completed or inconclusive cannot be published to the public library.
 
-This keeps the public library aligned with intentionally published, completed analyses only.
+This keeps the public library aligned with intentionally published terminal analyses that are useful for community discussion.
 
 ## Community Model
 
@@ -184,6 +187,7 @@ Lithdex is an actively evolving MVP/product codebase. This README is intended to
 - guided analysis workflow
 - persisted owned analyses
 - public publication semantics
+- owner-guided result dispute and reanalysis
 - community comments and feedback
 - profile bio/avatar management
 
