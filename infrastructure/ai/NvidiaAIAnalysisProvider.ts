@@ -162,6 +162,45 @@ interface NvidiaChatResponse {
   choices?: NvidiaChatResponseChoice[];
 }
 
+const PROVIDER_ERROR_BODY_LOG_LIMIT = 1000;
+
+interface ProviderRequestDiagnostics {
+  model: string;
+  imageCount: number;
+  approximateImageBase64Bytes: number;
+  approximatePayloadBytes: number;
+}
+
+function getApproximateByteLength(value: string): number {
+  return new TextEncoder().encode(value).length;
+}
+
+function truncateProviderBodyForLog(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= PROVIDER_ERROR_BODY_LOG_LIMIT) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, PROVIDER_ERROR_BODY_LOG_LIMIT)}...`;
+}
+
+function logRejectedProviderResponse(input: {
+  status: number;
+  durationMs: number;
+  responseBody: string;
+  diagnostics: ProviderRequestDiagnostics;
+}) {
+  console.error("NVIDIA AI provider rejected analysis request", {
+    httpStatus: input.status,
+    model: input.diagnostics.model,
+    durationMs: input.durationMs,
+    imageCount: input.diagnostics.imageCount,
+    approximateImageBase64Bytes:
+      input.diagnostics.approximateImageBase64Bytes,
+    approximatePayloadBytes: input.diagnostics.approximatePayloadBytes,
+    providerResponseBody: truncateProviderBodyForLog(input.responseBody),
+  });
+}
+
 function buildUserMessage(input: AIAnalysisRequestInput): ChatMessage {
   const parts: ChatMessageContent[] = [];
 
@@ -250,8 +289,26 @@ export class NvidiaAIAnalysisProvider implements AIAnalysisProvider {
       { role: "system", content: SYSTEM_PROMPT },
       buildUserMessage(input),
     ];
+    const requestBody = JSON.stringify({
+      model,
+      messages,
+      temperature: 0,
+      top_p: 0.1,
+      max_tokens: 1200,
+      response_format: { type: "json_object" },
+    });
+    const requestDiagnostics: ProviderRequestDiagnostics = {
+      model,
+      imageCount: input.images.length,
+      approximateImageBase64Bytes: input.images.reduce(
+        (total, image) => total + image.base64.length,
+        0
+      ),
+      approximatePayloadBytes: getApproximateByteLength(requestBody),
+    };
 
     let response: Response;
+    const startedAt = Date.now();
     try {
       response = await fetch(`${baseUrl}/chat/completions`, {
         method: "POST",
@@ -260,14 +317,7 @@ export class NvidiaAIAnalysisProvider implements AIAnalysisProvider {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0,
-          top_p: 0.1,
-          max_tokens: 1200,
-          response_format: { type: "json_object" },
-        }),
+        body: requestBody,
       });
     } catch (error) {
       throw new AIProviderError(
@@ -278,7 +328,14 @@ export class NvidiaAIAnalysisProvider implements AIAnalysisProvider {
     }
 
     if (!response.ok) {
-      // Don't leak raw provider body; the status code is usually enough.
+      const providerBody = await response.text().catch(() => "");
+      logRejectedProviderResponse({
+        status: response.status,
+        durationMs: Date.now() - startedAt,
+        responseBody: providerBody,
+        diagnostics: requestDiagnostics,
+      });
+
       throw new AIProviderError(
         `AI provider rejected the request (HTTP ${response.status}).`
       );

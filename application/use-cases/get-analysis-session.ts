@@ -2,6 +2,7 @@ import type { AnalysisImageRepository } from "@/domain/repositories/AnalysisImag
 import type { AnalysisInteractionRepository } from "@/domain/repositories/AnalysisInteractionRepository";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 import type { AnalysisResultRepository } from "@/domain/repositories/AnalysisResultRepository";
+import { AnalysisStatus } from "@/domain/enums/AnalysisStatus";
 
 import { toAnalysisDto } from "../dto/AnalysisDto";
 import { toAnalysisInteractionDto } from "../dto/AnalysisInteractionDto";
@@ -46,6 +47,9 @@ export function makeGetAnalysisSession(deps: GetAnalysisSessionDeps) {
       ...base,
       result: result ? toAnalysisResultDto(result) : null,
       interactions: interactions.map(toAnalysisInteractionDto),
+      viewerCanRetryFailedAnalysis:
+        analysis.status === AnalysisStatus.FAILED &&
+        analysis.userId === input.requesterUserId,
     };
   };
 }

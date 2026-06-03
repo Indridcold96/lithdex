@@ -152,9 +152,16 @@ export function AnalysisSessionClient({
       {status === AnalysisStatus.INCONCLUSIVE ? (
         <InconclusiveCard session={session} />
       ) : null}
-      {status === AnalysisStatus.FAILED ? <FailedCard /> : null}
+      {status === AnalysisStatus.FAILED ? (
+        <FailedCard canRetry={session.viewerCanRetryFailedAnalysis} />
+      ) : null}
 
-      <RunBlock status={status} running={running} onRun={run} />
+      <RunBlock
+        status={status}
+        running={running}
+        canRetry={session.viewerCanRetryFailedAnalysis}
+        onRun={run}
+      />
 
       <HistorySection interactions={interactions} />
     </div>
@@ -250,13 +257,15 @@ function InconclusiveCard({ session }: { session: AnalysisSessionDto }) {
   );
 }
 
-function FailedCard() {
+function FailedCard({ canRetry }: { canRetry: boolean }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Analysis failed</CardTitle>
         <CardDescription>
-          The analysis could not be completed. You can retry it.
+          A technical processing error stopped this analysis before a mineral
+          result could be produced.
+          {canRetry ? " You can retry the guided run." : null}
         </CardDescription>
       </CardHeader>
     </Card>
@@ -266,13 +275,15 @@ function FailedCard() {
 function RunBlock({
   status,
   running,
+  canRetry,
   onRun,
 }: {
   status: AnalysisStatus;
   running: boolean;
+  canRetry: boolean;
   onRun: () => void;
 }) {
-  if (status !== AnalysisStatus.FAILED) {
+  if (status !== AnalysisStatus.FAILED || !canRetry) {
     return null;
   }
 

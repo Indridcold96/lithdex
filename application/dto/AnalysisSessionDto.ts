@@ -8,4 +8,5 @@ import type { AnalysisResultDto } from "./AnalysisResultDto";
 export interface AnalysisSessionDto extends AnalysisDto {
   result: AnalysisResultDto | null;
   interactions: AnalysisInteractionDto[];
+  viewerCanRetryFailedAnalysis: boolean;
 }
