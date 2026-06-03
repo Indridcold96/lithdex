@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { makeSetAnalysisVisibility } from "@/application/use-cases/set-analysis-visibility";
+import { makeSetAnalysisVisibility } from "@/application/use-cases/analyses/set-analysis-visibility";
 import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";

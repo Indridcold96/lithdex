@@ -2,7 +2,7 @@ import type { PasswordHasher } from "@/domain/auth/PasswordHasher";
 import type { User } from "@/domain/entities/User";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
 
-import { InvalidCredentialsError } from "../errors";
+import { InvalidCredentialsError } from "../../errors";
 
 export interface LoginUserInput {
   email: string;

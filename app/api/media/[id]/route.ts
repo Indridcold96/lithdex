@@ -2,7 +2,7 @@ import { Readable } from "node:stream";
 
 import { NextResponse, type NextRequest } from "next/server";
 
-import { makeAccessAnalysisImage } from "@/application/use-cases/access-analysis-image";
+import { makeAccessAnalysisImage } from "@/application/use-cases/analyses/access-analysis-image";
 import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
 import { getOptionalSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";

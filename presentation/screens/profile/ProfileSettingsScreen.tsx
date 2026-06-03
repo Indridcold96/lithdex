@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { toAuthenticatedUserDto } from "@/application/dto/AuthenticatedUserDto";
-import { makeGetCurrentUser } from "@/application/use-cases/get-current-user";
+import { makeGetCurrentUser } from "@/application/use-cases/auth/get-current-user";
 import { getServerSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";

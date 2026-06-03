@@ -1,7 +1,7 @@
 import type { User } from "@/domain/entities/User";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
 
-import { UnauthenticatedError } from "../errors";
+import { UnauthenticatedError } from "../../errors";
 
 export interface GetCurrentUserDeps {
   userRepository: UserRepository;

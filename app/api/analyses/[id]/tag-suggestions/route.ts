@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { toAnalysisTagSuggestionDto } from "@/application/dto/AnalysisTagSuggestionDto";
 import { toPublicUserDto } from "@/application/dto/AuthenticatedUserDto";
-import { makeSuggestAnalysisTag } from "@/application/use-cases/suggest-analysis-tag";
+import { makeSuggestAnalysisTag } from "@/application/use-cases/analyses/suggest-analysis-tag";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";

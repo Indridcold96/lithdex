@@ -8,15 +8,16 @@ import {
   NotFoundError,
   UnauthenticatedError,
   ValidationError,
-} from "../errors";
+} from "../../errors";
 
-export interface DeleteAnalysisCommentInput {
+export interface UpdateAnalysisCommentInput {
   analysisId: string;
   commentId: string;
   actingUserId: string | null;
+  content: string;
 }
 
-export interface DeleteAnalysisCommentDeps {
+export interface UpdateAnalysisCommentDeps {
   analysisRepository: AnalysisRepository;
   analysisCommentRepository: AnalysisCommentRepository;
 }
@@ -32,12 +33,17 @@ function requireExistingComment(
   return comment;
 }
 
-export function makeDeleteAnalysisComment(deps: DeleteAnalysisCommentDeps) {
-  return async function deleteAnalysisComment(
-    input: DeleteAnalysisCommentInput
-  ): Promise<void> {
+export function makeUpdateAnalysisComment(deps: UpdateAnalysisCommentDeps) {
+  return async function updateAnalysisComment(
+    input: UpdateAnalysisCommentInput
+  ): Promise<AnalysisComment> {
     if (!input.actingUserId) {
       throw new UnauthenticatedError("Authentication required.");
+    }
+
+    const content = input.content.trim();
+    if (content.length === 0) {
+      throw new ValidationError("Comment content cannot be empty.");
     }
 
     const existingComment = await deps.analysisCommentRepository.findById(
@@ -55,13 +61,13 @@ export function makeDeleteAnalysisComment(deps: DeleteAnalysisCommentDeps) {
       );
     }
     if (comment.userId !== input.actingUserId) {
-      throw new ForbiddenError("You can only delete your own comments.");
+      throw new ForbiddenError("You can only edit your own comments.");
     }
 
-    await deps.analysisCommentRepository.deleteById(input.commentId);
+    return deps.analysisCommentRepository.updateContent(input.commentId, content);
   };
 }
 
-export type DeleteAnalysisComment = ReturnType<
-  typeof makeDeleteAnalysisComment
+export type UpdateAnalysisComment = ReturnType<
+  typeof makeUpdateAnalysisComment
 >;

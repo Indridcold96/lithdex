@@ -8,7 +8,7 @@ import {
   NotFoundError,
   UnauthenticatedError,
   ValidationError,
-} from "../errors";
+} from "../../errors";
 
 export interface SetAnalysisVisibilityInput {
   analysisId: string;

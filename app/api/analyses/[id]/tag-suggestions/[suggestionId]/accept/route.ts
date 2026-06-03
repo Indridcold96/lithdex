@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { toAnalysisTagDto } from "@/application/dto/AnalysisTagDto";
-import { makeAcceptAnalysisTagSuggestion } from "@/application/use-cases/accept-analysis-tag-suggestion";
+import { makeAcceptAnalysisTagSuggestion } from "@/application/use-cases/analyses/accept-analysis-tag-suggestion";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";

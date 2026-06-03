@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { makeListUserAnalyses } from "@/application/use-cases/list-user-analyses";
+import { makeListUserAnalyses } from "@/application/use-cases/analyses/list-user-analyses";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisImageRepository } from "@/infrastructure/database/repositories/PrismaAnalysisImageRepository";

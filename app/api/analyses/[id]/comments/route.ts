@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { toAnalysisCommentDto } from "@/application/dto/AnalysisCommentDto";
-import { makeAddAnalysisComment } from "@/application/use-cases/add-analysis-comment";
+import { makeAddAnalysisComment } from "@/application/use-cases/analyses/add-analysis-comment";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisCommentRepository } from "@/infrastructure/database/repositories/PrismaAnalysisCommentRepository";

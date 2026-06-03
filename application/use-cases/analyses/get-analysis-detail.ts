@@ -10,15 +10,15 @@ import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepositor
 import type { AnalysisResultRepository } from "@/domain/repositories/AnalysisResultRepository";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
 
-import { toAnalysisCommentDto } from "../dto/AnalysisCommentDto";
-import type { AnalysisDetailDto } from "../dto/AnalysisDetailDto";
-import { toAnalysisDto } from "../dto/AnalysisDto";
-import { toAnalysisInteractionDto } from "../dto/AnalysisInteractionDto";
-import { toAnalysisResultDto } from "../dto/AnalysisResultDto";
-import { toAnalysisTagDto } from "../dto/AnalysisTagDto";
-import { toAnalysisTagSuggestionDto } from "../dto/AnalysisTagSuggestionDto";
-import { toPublicUserDto } from "../dto/AuthenticatedUserDto";
-import { NotFoundError } from "../errors";
+import { toAnalysisCommentDto } from "../../dto/AnalysisCommentDto";
+import type { AnalysisDetailDto } from "../../dto/AnalysisDetailDto";
+import { toAnalysisDto } from "../../dto/AnalysisDto";
+import { toAnalysisInteractionDto } from "../../dto/AnalysisInteractionDto";
+import { toAnalysisResultDto } from "../../dto/AnalysisResultDto";
+import { toAnalysisTagDto } from "../../dto/AnalysisTagDto";
+import { toAnalysisTagSuggestionDto } from "../../dto/AnalysisTagSuggestionDto";
+import { toPublicUserDto } from "../../dto/AuthenticatedUserDto";
+import { NotFoundError } from "../../errors";
 
 export interface GetAnalysisDetailInput {
   id: string;

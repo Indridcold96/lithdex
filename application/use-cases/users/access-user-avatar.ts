@@ -1,7 +1,7 @@
 import type { User } from "@/domain/entities/User";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
 
-import { NotFoundError } from "../errors";
+import { NotFoundError } from "../../errors";
 
 export interface AccessUserAvatarInput {
   userId: string;

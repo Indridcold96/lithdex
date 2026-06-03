@@ -2,10 +2,10 @@ import type { User } from "@/domain/entities/User";
 import type { UserFollowRepository } from "@/domain/repositories/UserFollowRepository";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
 
-import { toUserAvatarUrl } from "../dto/AuthenticatedUserDto";
-import type { PublicMemberProfileDto } from "../dto/PublicMemberProfileDto";
-import { NotFoundError, ValidationError } from "../errors";
-import { normalizeAndValidateUsername } from "../username";
+import { toUserAvatarUrl } from "../../dto/AuthenticatedUserDto";
+import type { PublicMemberProfileDto } from "../../dto/PublicMemberProfileDto";
+import { NotFoundError, ValidationError } from "../../errors";
+import { normalizeAndValidateUsername } from "../../username";
 
 export async function resolveUserByUsername(
   userRepository: UserRepository,

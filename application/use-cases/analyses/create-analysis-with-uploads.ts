@@ -10,10 +10,10 @@ import {
   MAX_IMAGE_BYTES,
   MIN_ANALYSIS_IMAGES,
   type AllowedImageMimeType,
-} from "../config/uploads";
-import { toAnalysisDto, type AnalysisDto } from "../dto/AnalysisDto";
-import { ValidationError } from "../errors";
-import { validateUploadedImage } from "../files/validate-uploaded-image";
+} from "../../config/uploads";
+import { toAnalysisDto, type AnalysisDto } from "../../dto/AnalysisDto";
+import { ValidationError } from "../../errors";
+import { validateUploadedImage } from "../../files/validate-uploaded-image";
 
 export interface UploadedFileInput {
   body: Buffer;

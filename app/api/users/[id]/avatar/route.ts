@@ -2,7 +2,7 @@ import { Readable } from "node:stream";
 
 import { NextResponse, type NextRequest } from "next/server";
 
-import { makeAccessUserAvatar } from "@/application/use-cases/access-user-avatar";
+import { makeAccessUserAvatar } from "@/application/use-cases/users/access-user-avatar";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";
 import { errorToResponse } from "@/infrastructure/http/responses";

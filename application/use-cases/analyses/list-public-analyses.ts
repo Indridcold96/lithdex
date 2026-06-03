@@ -5,9 +5,9 @@ import type {
   ListPublicAnalysesOptions,
 } from "@/domain/repositories/AnalysisRepository";
 
-import { toAnalysisDto } from "../dto/AnalysisDto";
-import type { PublicAnalysesPageDto } from "../dto/PublicAnalysesPageDto";
-import { ValidationError } from "../errors";
+import { toAnalysisDto } from "../../dto/AnalysisDto";
+import type { PublicAnalysesPageDto } from "../../dto/PublicAnalysesPageDto";
+import { ValidationError } from "../../errors";
 
 export type ListPublicAnalysesInput = ListPublicAnalysesOptions;
 

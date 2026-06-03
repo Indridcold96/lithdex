@@ -23,17 +23,17 @@ import { shouldPublishAnalysis } from "@/domain/rules/analysis";
 import type { FileStorage } from "@/domain/storage/FileStorage";
 
 import { applySystemAnalysisTags } from "./tags/system-analysis-tags";
-import { toAnalysisInteractionDto } from "../dto/AnalysisInteractionDto";
-import type { AnalysisRunOutcomeDto } from "../dto/AnalysisRunOutcomeDto";
-import { toAnalysisResultDto } from "../dto/AnalysisResultDto";
+import { toAnalysisInteractionDto } from "../../dto/AnalysisInteractionDto";
+import type { AnalysisRunOutcomeDto } from "../../dto/AnalysisRunOutcomeDto";
+import { toAnalysisResultDto } from "../../dto/AnalysisResultDto";
 import {
   AIProviderError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../errors";
-import { MIN_ANALYSIS_IMAGES } from "../config/uploads";
+} from "../../errors";
+import { MIN_ANALYSIS_IMAGES } from "../../config/uploads";
 
 export interface RunAnalysisPassInput {
   analysisId: string;

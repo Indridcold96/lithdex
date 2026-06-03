@@ -4,7 +4,7 @@ import { z } from "zod";
 import type {
   AnalysisFeedbackSummaryDto,
 } from "@/application/dto/AnalysisDetailDto";
-import { makeAddAnalysisFeedback } from "@/application/use-cases/add-analysis-feedback";
+import { makeAddAnalysisFeedback } from "@/application/use-cases/analyses/add-analysis-feedback";
 import { AnalysisFeedbackType } from "@/domain/enums/AnalysisFeedbackType";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";

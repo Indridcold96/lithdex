@@ -11,13 +11,13 @@ import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepositor
 import {
   toAnalysisInteractionDto,
   type AnalysisInteractionDto,
-} from "../dto/AnalysisInteractionDto";
+} from "../../dto/AnalysisInteractionDto";
 import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../errors";
+} from "../../errors";
 
 export interface FollowupAnswerInput {
   questionId: string;

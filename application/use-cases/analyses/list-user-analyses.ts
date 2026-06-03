@@ -4,8 +4,8 @@ import type {
   ListUserAnalysesOptions,
 } from "@/domain/repositories/AnalysisRepository";
 
-import { toAnalysisDto, type AnalysisDto } from "../dto/AnalysisDto";
-import type { UserAnalysesPageDto } from "../dto/UserAnalysesPageDto";
+import { toAnalysisDto, type AnalysisDto } from "../../dto/AnalysisDto";
+import type { UserAnalysesPageDto } from "../../dto/UserAnalysesPageDto";
 
 export interface ListUserAnalysesInput extends ListUserAnalysesOptions {
   userId: string;

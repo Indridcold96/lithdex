@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { toAuthenticatedUserDto } from "@/application/dto/AuthenticatedUserDto";
 import { UnauthenticatedError } from "@/application/errors";
-import { makeGetCurrentUser } from "@/application/use-cases/get-current-user";
+import { makeGetCurrentUser } from "@/application/use-cases/auth/get-current-user";
 import { readSessionCookie } from "@/infrastructure/auth/cookies";
 import { JoseSessionTokenService } from "@/infrastructure/auth/JoseSessionTokenService";
 import { prisma } from "@/infrastructure/database/prisma";

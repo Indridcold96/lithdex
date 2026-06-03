@@ -4,7 +4,7 @@ import type { AnalysisFeedbackRepository } from "@/domain/repositories/AnalysisF
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 import { canReceiveCommunityFeedback } from "@/domain/rules/analysis";
 
-import { NotFoundError, ValidationError } from "../errors";
+import { NotFoundError, ValidationError } from "../../errors";
 
 export interface AddAnalysisFeedbackInput {
   analysisId: string;

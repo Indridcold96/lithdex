@@ -2,8 +2,8 @@ import type { PasswordHasher } from "@/domain/auth/PasswordHasher";
 import type { User } from "@/domain/entities/User";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
 
-import { DuplicateError, ValidationError } from "../errors";
-import { normalizeAndValidateUsername } from "../username";
+import { DuplicateError, ValidationError } from "../../errors";
+import { normalizeAndValidateUsername } from "../../username";
 
 export interface RegisterUserInput {
   email: string;

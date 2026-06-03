@@ -3,7 +3,7 @@ import type { AnalysisCommentRepository } from "@/domain/repositories/AnalysisCo
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 import { canReceiveCommunityFeedback } from "@/domain/rules/analysis";
 
-import { NotFoundError, ValidationError } from "../errors";
+import { NotFoundError, ValidationError } from "../../errors";
 
 export interface AddAnalysisCommentInput {
   analysisId: string;

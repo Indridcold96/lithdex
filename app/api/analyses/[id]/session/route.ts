@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { makeGetAnalysisSession } from "@/application/use-cases/get-analysis-session";
+import { makeGetAnalysisSession } from "@/application/use-cases/analyses/get-analysis-session";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisImageRepository } from "@/infrastructure/database/repositories/PrismaAnalysisImageRepository";

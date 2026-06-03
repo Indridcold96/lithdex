@@ -8,7 +8,7 @@ import {
   ForbiddenError,
   NotFoundError,
   UnauthenticatedError,
-} from "../errors";
+} from "../../errors";
 
 export interface AccessAnalysisImageInput {
   imageId: string;

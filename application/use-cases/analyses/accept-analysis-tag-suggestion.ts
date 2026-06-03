@@ -1,29 +1,32 @@
+import { AnalysisTagSource } from "@/domain/enums/AnalysisTagSource";
 import { AnalysisTagSuggestionStatus } from "@/domain/enums/AnalysisTagSuggestionStatus";
 import type { AnalysisTagSuggestionRepository } from "@/domain/repositories/AnalysisTagSuggestionRepository";
+import type { AnalysisTagRepository } from "@/domain/repositories/AnalysisTagRepository";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 
 import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
-} from "../errors";
+} from "../../errors";
 
-export interface RejectAnalysisTagSuggestionInput {
+export interface AcceptAnalysisTagSuggestionInput {
   analysisId: string;
   suggestionId: string;
   reviewerUserId: string;
 }
 
-export interface RejectAnalysisTagSuggestionDeps {
+export interface AcceptAnalysisTagSuggestionDeps {
   analysisRepository: AnalysisRepository;
+  analysisTagRepository: AnalysisTagRepository;
   analysisTagSuggestionRepository: AnalysisTagSuggestionRepository;
 }
 
-export function makeRejectAnalysisTagSuggestion(
-  deps: RejectAnalysisTagSuggestionDeps
+export function makeAcceptAnalysisTagSuggestion(
+  deps: AcceptAnalysisTagSuggestionDeps
 ) {
-  return async function rejectAnalysisTagSuggestion(
-    input: RejectAnalysisTagSuggestionInput
+  return async function acceptAnalysisTagSuggestion(
+    input: AcceptAnalysisTagSuggestionInput
   ) {
     const analysis = await deps.analysisRepository.findById(input.analysisId);
     if (!analysis) {
@@ -44,18 +47,29 @@ export function makeRejectAnalysisTagSuggestion(
       );
     }
     if (suggestion.status !== AnalysisTagSuggestionStatus.PENDING) {
-      throw new ConflictError("Only pending tag suggestions can be rejected.");
+      throw new ConflictError("Only pending tag suggestions can be accepted.");
     }
 
-    return deps.analysisTagSuggestionRepository.review({
+    const appliedTag = await deps.analysisTagRepository.attach({
+      analysisId: analysis.id,
+      tagId: suggestion.tagId,
+      sourceType: AnalysisTagSource.SUGGESTION,
+    });
+
+    const reviewedSuggestion = await deps.analysisTagSuggestionRepository.review({
       id: suggestion.id,
-      status: AnalysisTagSuggestionStatus.REJECTED,
+      status: AnalysisTagSuggestionStatus.ACCEPTED,
       reviewedByUserId: input.reviewerUserId,
       reviewedAt: new Date(),
     });
+
+    return {
+      suggestion: reviewedSuggestion,
+      appliedTag,
+    };
   };
 }
 
-export type RejectAnalysisTagSuggestion = ReturnType<
-  typeof makeRejectAnalysisTagSuggestion
+export type AcceptAnalysisTagSuggestion = ReturnType<
+  typeof makeAcceptAnalysisTagSuggestion
 >;

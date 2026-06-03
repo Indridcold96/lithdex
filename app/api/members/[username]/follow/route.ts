@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { makeFollowUser } from "@/application/use-cases/follow-user";
-import { makeUnfollowUser } from "@/application/use-cases/unfollow-user";
+import { makeFollowUser } from "@/application/use-cases/users/follow-user";
+import { makeUnfollowUser } from "@/application/use-cases/users/unfollow-user";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserFollowRepository } from "@/infrastructure/database/repositories/PrismaUserFollowRepository";

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 
 import type { PublicAnalysesPageDto } from "@/application/dto/PublicAnalysesPageDto";
-import { makeListPublicAnalyses } from "@/application/use-cases/list-public-analyses";
+import { makeListPublicAnalyses } from "@/application/use-cases/analyses/list-public-analyses";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisImageRepository } from "@/infrastructure/database/repositories/PrismaAnalysisImageRepository";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";

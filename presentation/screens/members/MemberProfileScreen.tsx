@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import type { PublicMemberProfileDto } from "@/application/dto/PublicMemberProfileDto";
 import { NotFoundError } from "@/application/errors";
-import { makeGetPublicUserProfileByUsername } from "@/application/use-cases/get-public-user-profile-by-username";
+import { makeGetPublicUserProfileByUsername } from "@/application/use-cases/users/get-public-user-profile-by-username";
 import { getServerSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserFollowRepository } from "@/infrastructure/database/repositories/PrismaUserFollowRepository";

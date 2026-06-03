@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import type { AnalysisDetailDto } from "@/application/dto/AnalysisDetailDto";
 import { NotFoundError } from "@/application/errors";
-import { makeGetAnalysisDetail } from "@/application/use-cases/get-analysis-detail";
+import { makeGetAnalysisDetail } from "@/application/use-cases/analyses/get-analysis-detail";
 import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
 import { getServerSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";

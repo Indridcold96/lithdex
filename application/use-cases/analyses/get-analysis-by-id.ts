@@ -2,8 +2,8 @@ import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
 import type { AnalysisImageRepository } from "@/domain/repositories/AnalysisImageRepository";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 
-import { toAnalysisDto, type AnalysisDto } from "../dto/AnalysisDto";
-import { NotFoundError } from "../errors";
+import { toAnalysisDto, type AnalysisDto } from "../../dto/AnalysisDto";
+import { NotFoundError } from "../../errors";
 
 export interface GetAnalysisByIdInput {
   id: string;

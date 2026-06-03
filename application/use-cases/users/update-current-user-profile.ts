@@ -2,7 +2,7 @@ import { MAX_USER_BIO_LENGTH } from "@/application/config/profile";
 import type { User } from "@/domain/entities/User";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
 
-import { UnauthenticatedError, ValidationError } from "../errors";
+import { UnauthenticatedError, ValidationError } from "../../errors";
 
 export interface UpdateCurrentUserProfileInput {
   userId: string;

@@ -2,11 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { ValidationError } from "@/application/errors";
-import { makeRunAnalysisPass } from "@/application/use-cases/run-analysis-pass";
-import { makeSubmitFollowupAndRun } from "@/application/use-cases/submit-followup-and-run";
-import { makeSubmitFollowupAnswers } from "@/application/use-cases/submit-followup-answers";
-import { makeUploadFollowupImages } from "@/application/use-cases/upload-followup-images";
-import type { UploadedFileInput } from "@/application/use-cases/create-analysis-with-uploads";
+import { makeRunAnalysisPass } from "@/application/use-cases/analyses/run-analysis-pass";
+import { makeSubmitFollowupAndRun } from "@/application/use-cases/analyses/submit-followup-and-run";
+import { makeSubmitFollowupAnswers } from "@/application/use-cases/analyses/submit-followup-answers";
+import { makeUploadFollowupImages } from "@/application/use-cases/analyses/upload-followup-images";
+import type { UploadedFileInput } from "@/application/use-cases/analyses/create-analysis-with-uploads";
 import { NvidiaAIAnalysisProvider } from "@/infrastructure/ai/NvidiaAIAnalysisProvider";
 import { prepareAnalysisImagesForAi } from "@/infrastructure/ai/prepareAnalysisImages";
 import { requireSessionUserId } from "@/infrastructure/auth/session";

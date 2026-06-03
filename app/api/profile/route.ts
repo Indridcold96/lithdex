@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { toAuthenticatedUserDto } from "@/application/dto/AuthenticatedUserDto";
-import { makeUpdateCurrentUserProfile } from "@/application/use-cases/update-current-user-profile";
+import { makeUpdateCurrentUserProfile } from "@/application/use-cases/users/update-current-user-profile";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { toAuthenticatedUserDto } from "@/application/dto/AuthenticatedUserDto";
-import { makeLoginUser } from "@/application/use-cases/login-user";
+import { makeLoginUser } from "@/application/use-cases/auth/login-user";
 import { BcryptPasswordHasher } from "@/infrastructure/auth/BcryptPasswordHasher";
 import { setSessionCookie } from "@/infrastructure/auth/cookies";
 import { JoseSessionTokenService } from "@/infrastructure/auth/JoseSessionTokenService";

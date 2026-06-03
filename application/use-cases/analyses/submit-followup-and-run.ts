@@ -1,5 +1,5 @@
-import type { AnalysisRunOutcomeDto } from "../dto/AnalysisRunOutcomeDto";
-import { ValidationError } from "../errors";
+import type { AnalysisRunOutcomeDto } from "../../dto/AnalysisRunOutcomeDto";
+import { ValidationError } from "../../errors";
 import type {
   FollowupAnswerInput,
   SubmitFollowupAnswers,

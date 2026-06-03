@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { toAuthenticatedUserDto } from "@/application/dto/AuthenticatedUserDto";
 import { ValidationError } from "@/application/errors";
-import { makeUpdateCurrentUserProfile } from "@/application/use-cases/update-current-user-profile";
-import { makeUploadUserAvatar } from "@/application/use-cases/upload-user-avatar";
+import { makeUpdateCurrentUserProfile } from "@/application/use-cases/users/update-current-user-profile";
+import { makeUploadUserAvatar } from "@/application/use-cases/users/upload-user-avatar";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaUserRepository } from "@/infrastructure/database/repositories/PrismaUserRepository";

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { makeRejectAnalysisTagSuggestion } from "@/application/use-cases/reject-analysis-tag-suggestion";
+import { makeRejectAnalysisTagSuggestion } from "@/application/use-cases/analyses/reject-analysis-tag-suggestion";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisRepository } from "@/infrastructure/database/repositories/PrismaAnalysisRepository";

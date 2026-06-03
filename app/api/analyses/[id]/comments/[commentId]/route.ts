@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
 import { toAnalysisCommentDto } from "@/application/dto/AnalysisCommentDto";
-import { makeDeleteAnalysisComment } from "@/application/use-cases/delete-analysis-comment";
-import { makeUpdateAnalysisComment } from "@/application/use-cases/update-analysis-comment";
+import { makeDeleteAnalysisComment } from "@/application/use-cases/analyses/delete-analysis-comment";
+import { makeUpdateAnalysisComment } from "@/application/use-cases/analyses/update-analysis-comment";
 import { requireSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisCommentRepository } from "@/infrastructure/database/repositories/PrismaAnalysisCommentRepository";

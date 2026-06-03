@@ -15,18 +15,18 @@ import {
   MAX_ANALYSIS_IMAGES,
   MAX_IMAGE_BYTES,
   type AllowedImageMimeType,
-} from "../config/uploads";
+} from "../../config/uploads";
 import {
   toAnalysisImageDto,
   type AnalysisImageDto,
-} from "../dto/AnalysisDto";
+} from "../../dto/AnalysisDto";
 import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../errors";
-import { validateUploadedImage } from "../files/validate-uploaded-image";
+} from "../../errors";
+import { validateUploadedImage } from "../../files/validate-uploaded-image";
 import type { UploadedFileInput } from "./create-analysis-with-uploads";
 
 export interface UploadFollowupImagesInput {

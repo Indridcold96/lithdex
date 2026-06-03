@@ -4,11 +4,11 @@ import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepositor
 import type { AnalysisResultRepository } from "@/domain/repositories/AnalysisResultRepository";
 import { AnalysisStatus } from "@/domain/enums/AnalysisStatus";
 
-import { toAnalysisDto } from "../dto/AnalysisDto";
-import { toAnalysisInteractionDto } from "../dto/AnalysisInteractionDto";
-import { toAnalysisResultDto } from "../dto/AnalysisResultDto";
-import type { AnalysisSessionDto } from "../dto/AnalysisSessionDto";
-import { ForbiddenError, NotFoundError } from "../errors";
+import { toAnalysisDto } from "../../dto/AnalysisDto";
+import { toAnalysisInteractionDto } from "../../dto/AnalysisInteractionDto";
+import { toAnalysisResultDto } from "../../dto/AnalysisResultDto";
+import type { AnalysisSessionDto } from "../../dto/AnalysisSessionDto";
+import { ForbiddenError, NotFoundError } from "../../errors";
 
 export interface GetAnalysisSessionInput {
   id: string;

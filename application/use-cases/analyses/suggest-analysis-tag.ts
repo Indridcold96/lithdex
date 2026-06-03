@@ -11,7 +11,7 @@ import {
   ForbiddenError,
   NotFoundError,
   ValidationError,
-} from "../errors";
+} from "../../errors";
 
 export interface SuggestAnalysisTagInput {
   analysisId: string;

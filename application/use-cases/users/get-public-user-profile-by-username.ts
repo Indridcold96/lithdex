@@ -1,7 +1,7 @@
 import type { UserFollowRepository } from "@/domain/repositories/UserFollowRepository";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
 
-import type { PublicMemberProfileDto } from "../dto/PublicMemberProfileDto";
+import type { PublicMemberProfileDto } from "../../dto/PublicMemberProfileDto";
 import {
   buildPublicMemberProfile,
   resolveUserByUsername,

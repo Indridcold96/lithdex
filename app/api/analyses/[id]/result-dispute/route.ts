@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { makeDisputeAnalysisResultAndRun } from "@/application/use-cases/dispute-analysis-result-and-run";
-import { makeRunAnalysisPass } from "@/application/use-cases/run-analysis-pass";
+import { makeDisputeAnalysisResultAndRun } from "@/application/use-cases/analyses/dispute-analysis-result-and-run";
+import { makeRunAnalysisPass } from "@/application/use-cases/analyses/run-analysis-pass";
 import { NvidiaAIAnalysisProvider } from "@/infrastructure/ai/NvidiaAIAnalysisProvider";
 import { prepareAnalysisImagesForAi } from "@/infrastructure/ai/prepareAnalysisImages";
 import { requireSessionUserId } from "@/infrastructure/auth/session";

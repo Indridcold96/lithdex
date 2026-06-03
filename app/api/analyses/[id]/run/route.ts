@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { makeRunAnalysisPass } from "@/application/use-cases/run-analysis-pass";
+import { makeRunAnalysisPass } from "@/application/use-cases/analyses/run-analysis-pass";
 import { NvidiaAIAnalysisProvider } from "@/infrastructure/ai/NvidiaAIAnalysisProvider";
 import { prepareAnalysisImagesForAi } from "@/infrastructure/ai/prepareAnalysisImages";
 import { requireSessionUserId } from "@/infrastructure/auth/session";

@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 
 import type { AnalysisSessionDto } from "@/application/dto/AnalysisSessionDto";
 import { ForbiddenError, NotFoundError } from "@/application/errors";
-import { makeGetAnalysisSession } from "@/application/use-cases/get-analysis-session";
+import { makeGetAnalysisSession } from "@/application/use-cases/analyses/get-analysis-session";
 import { getServerSessionUserId } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/database/prisma";
 import { PrismaAnalysisImageRepository } from "@/infrastructure/database/repositories/PrismaAnalysisImageRepository";

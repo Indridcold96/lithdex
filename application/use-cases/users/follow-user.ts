@@ -1,8 +1,8 @@
 import type { UserFollowRepository } from "@/domain/repositories/UserFollowRepository";
 import type { UserRepository } from "@/domain/repositories/UserRepository";
 
-import type { PublicMemberProfileDto } from "../dto/PublicMemberProfileDto";
-import { UnauthenticatedError, ValidationError } from "../errors";
+import type { PublicMemberProfileDto } from "../../dto/PublicMemberProfileDto";
+import { UnauthenticatedError, ValidationError } from "../../errors";
 import {
   buildPublicMemberProfile,
   resolveUserByUsername,

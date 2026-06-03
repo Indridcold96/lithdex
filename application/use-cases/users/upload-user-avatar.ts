@@ -5,9 +5,9 @@ import type { FileStorage } from "@/domain/storage/FileStorage";
 import {
   MAX_IMAGE_BYTES,
   type AllowedImageMimeType,
-} from "../config/uploads";
-import { UnauthenticatedError, ValidationError } from "../errors";
-import { validateUploadedImage } from "../files/validate-uploaded-image";
+} from "../../config/uploads";
+import { UnauthenticatedError, ValidationError } from "../../errors";
+import { validateUploadedImage } from "../../files/validate-uploaded-image";
 import type { UpdateCurrentUserProfile } from "./update-current-user-profile";
 
 export interface UploadUserAvatarFileInput {

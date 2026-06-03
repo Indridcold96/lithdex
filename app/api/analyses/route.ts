@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import {
   makeCreateAnalysisWithUploads,
   type UploadedFileInput,
-} from "@/application/use-cases/create-analysis-with-uploads";
+} from "@/application/use-cases/analyses/create-analysis-with-uploads";
 import { ValidationError } from "@/application/errors";
 import { AnalysisVisibility } from "@/domain/enums/AnalysisVisibility";
 import { requireSessionUserId } from "@/infrastructure/auth/session";

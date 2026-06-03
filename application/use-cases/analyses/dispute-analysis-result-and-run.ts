@@ -4,13 +4,13 @@ import { AnalysisStatus } from "@/domain/enums/AnalysisStatus";
 import type { AnalysisInteractionRepository } from "@/domain/repositories/AnalysisInteractionRepository";
 import type { AnalysisRepository } from "@/domain/repositories/AnalysisRepository";
 
-import type { AnalysisRunOutcomeDto } from "../dto/AnalysisRunOutcomeDto";
+import type { AnalysisRunOutcomeDto } from "../../dto/AnalysisRunOutcomeDto";
 import {
   ForbiddenError,
   NotFoundError,
   UnauthenticatedError,
   ValidationError,
-} from "../errors";
+} from "../../errors";
 import type { RunAnalysisPass } from "./run-analysis-pass";
 
 export const MAX_DISPUTE_IDENTIFICATION_LENGTH = 120;

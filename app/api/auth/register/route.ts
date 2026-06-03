@@ -6,7 +6,7 @@ import {
   USERNAME_MIN_LENGTH,
 } from "@/application/username";
 import { toAuthenticatedUserDto } from "@/application/dto/AuthenticatedUserDto";
-import { makeRegisterUser } from "@/application/use-cases/register-user";
+import { makeRegisterUser } from "@/application/use-cases/auth/register-user";
 import { BcryptPasswordHasher } from "@/infrastructure/auth/BcryptPasswordHasher";
 import { setSessionCookie } from "@/infrastructure/auth/cookies";
 import { JoseSessionTokenService } from "@/infrastructure/auth/JoseSessionTokenService";
