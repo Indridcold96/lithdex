@@ -9,6 +9,8 @@ import type {
   ListPublicAnalysesOptions,
   ListPublicAnalysesResult,
   ListUserAnalysesOptions,
+  ListUserAnalysesResult,
+  UserAnalysisCounts,
 } from "@/domain/repositories/AnalysisRepository";
 
 type PrismaAnalysisRow = Awaited<
@@ -101,17 +103,48 @@ export class PrismaAnalysisRepository implements AnalysisRepository {
   async listByUserId(
     userId: string,
     options: ListUserAnalysesOptions = {}
-  ): Promise<Analysis[]> {
+  ): Promise<ListUserAnalysesResult> {
     const { limit, cursor } = options;
+    const take = typeof limit === "number" ? limit + 1 : undefined;
 
     const rows = await this.prisma.analysis.findMany({
       where: { userId },
-      orderBy: { createdAt: "desc" },
-      ...(typeof limit === "number" ? { take: limit } : {}),
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      ...(typeof take === "number" ? { take } : {}),
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
     });
 
-    return rows.map(toDomain);
+    const hasMore = typeof limit === "number" ? rows.length > limit : false;
+    const pageRows = hasMore ? rows.slice(0, limit) : rows;
+    const items = pageRows.map(toDomain);
+
+    return {
+      items,
+      nextCursor:
+        hasMore && items.length > 0 ? items[items.length - 1].id : null,
+      hasMore,
+    };
+  }
+
+  async countByUserId(userId: string): Promise<UserAnalysisCounts> {
+    const grouped = await this.prisma.analysis.groupBy({
+      by: ["visibility"],
+      where: { userId },
+      _count: { _all: true },
+    });
+
+    const counts: UserAnalysisCounts = { total: 0, public: 0, private: 0 };
+    for (const group of grouped) {
+      counts.total += group._count._all;
+      if (group.visibility === AnalysisVisibility.PUBLIC) {
+        counts.public = group._count._all;
+      }
+      if (group.visibility === AnalysisVisibility.PRIVATE) {
+        counts.private = group._count._all;
+      }
+    }
+
+    return counts;
   }
 
   async updateStatus(id: string, status: AnalysisStatus): Promise<Analysis> {

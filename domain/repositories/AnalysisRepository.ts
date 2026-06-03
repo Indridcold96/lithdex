@@ -27,6 +27,18 @@ export interface ListUserAnalysesOptions {
   cursor?: string;
 }
 
+export interface ListUserAnalysesResult {
+  items: Analysis[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
+export interface UserAnalysisCounts {
+  total: number;
+  public: number;
+  private: number;
+}
+
 export interface AnalysisRepository {
   createShell(data: CreateAnalysisShellData): Promise<Analysis>;
   findById(id: string): Promise<Analysis | null>;
@@ -36,7 +48,8 @@ export interface AnalysisRepository {
   listByUserId(
     userId: string,
     options?: ListUserAnalysesOptions
-  ): Promise<Analysis[]>;
+  ): Promise<ListUserAnalysesResult>;
+  countByUserId(userId: string): Promise<UserAnalysisCounts>;
   updateVisibility(
     id: string,
     visibility: AnalysisVisibility
