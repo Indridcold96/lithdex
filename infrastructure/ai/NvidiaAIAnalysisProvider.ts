@@ -1,3 +1,4 @@
+import { jsonrepair } from "jsonrepair";
 import { z } from "zod";
 
 import { AIProviderError } from "@/application/errors";
@@ -79,8 +80,8 @@ Schema by kind:
   "summary": "short one-line summary",
   "primary_mineral_name": "common mineral name or null if unknown",
   "confidence": number between 0 and 1 or null,
-  "explanation": "concise technical explanation of how the identification was reached",
-  "tags": ["up to 5 short discovery tags if useful"],
+  "explanation": "concise technical explanation, max 2-3 sentences",
+  "tags": ["up to 3 short discovery tags if useful"],
   "alternatives": [
     { "name": "mineral name", "confidence": number 0..1 or null }
   ]
@@ -127,7 +128,10 @@ Use when neither more images nor more clarifications will realistically resolve 
 Follow-up discipline:
 - Do not repeat question categories or image requests that were already asked earlier in the analysis.
 - If the prior interactions show repeated attempts without enough new evidence, prefer "inconclusive" over another repetitive follow-up.
-- For "final", you may include a small "tags" array with short discovery tags. Prefer concise mineral, family, or specimen-trait tags. Omit the field if there are no good tags.
+- Keep "summary" to one short sentence.
+- Keep "explanation" concise, no more than 2-3 sentences.
+- For "final", you may include a small "tags" array with up to 3 short discovery tags. Prefer concise mineral, family, or specimen-trait tags. Omit the field if there are no good tags.
+- For "final", include no more than 3 alternatives.
 
 Owner dispute handling:
 - A prior interaction with type "owner_result_dispute" means the analysis owner disputes the current AI result.
@@ -163,6 +167,43 @@ interface NvidiaChatResponse {
 }
 
 const PROVIDER_ERROR_BODY_LOG_LIMIT = 1000;
+const MALFORMED_OUTPUT_LOG_LIMIT = 500;
+
+type NormalizedResponse = z.infer<typeof NormalizedResponseSchema>;
+
+type MalformedResponseFailureCategory = "parse_error" | "schema_error";
+
+type ParseAndValidateResult =
+  | {
+      success: true;
+      contentString: string;
+      data: NormalizedResponse;
+      deterministicRepairAttempted: boolean;
+      deterministicRepairSucceeded: boolean;
+      originalFailureCategory?: MalformedResponseFailureCategory;
+    }
+  | {
+      success: false;
+      contentString: string;
+      category: MalformedResponseFailureCategory;
+      deterministicRepairAttempted: boolean;
+      deterministicRepairSucceeded: boolean;
+    };
+
+type ParsedModelContentResult =
+  | {
+      success: true;
+      data: NormalizedResponse;
+      deterministicRepairAttempted: boolean;
+      deterministicRepairSucceeded: boolean;
+      originalFailureCategory?: MalformedResponseFailureCategory;
+    }
+  | {
+      success: false;
+      category: MalformedResponseFailureCategory;
+      deterministicRepairAttempted: boolean;
+      deterministicRepairSucceeded: boolean;
+    };
 
 interface ProviderRequestDiagnostics {
   model: string;
@@ -183,6 +224,14 @@ function truncateProviderBodyForLog(value: string): string {
   return `${trimmed.slice(0, PROVIDER_ERROR_BODY_LOG_LIMIT)}...`;
 }
 
+function truncateMalformedOutputForLog(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length <= MALFORMED_OUTPUT_LOG_LIMIT) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, MALFORMED_OUTPUT_LOG_LIMIT)}...`;
+}
+
 function logRejectedProviderResponse(input: {
   status: number;
   durationMs: number;
@@ -198,6 +247,26 @@ function logRejectedProviderResponse(input: {
       input.diagnostics.approximateImageBase64Bytes,
     approximatePayloadBytes: input.diagnostics.approximatePayloadBytes,
     providerResponseBody: truncateProviderBodyForLog(input.responseBody),
+  });
+}
+
+function logMalformedResponseRepair(input: {
+  model: string;
+  deterministicRepairAttempted: boolean;
+  deterministicRepairSucceeded: boolean;
+  llmRepairAttempted: boolean;
+  llmRepairSucceeded: boolean;
+  failureCategory: MalformedResponseFailureCategory;
+  invalidOutput: string;
+}) {
+  console.warn("NVIDIA AI provider malformed response repair", {
+    model: input.model,
+    deterministicRepairAttempted: input.deterministicRepairAttempted,
+    deterministicRepairSucceeded: input.deterministicRepairSucceeded,
+    llmRepairAttempted: input.llmRepairAttempted,
+    llmRepairSucceeded: input.llmRepairSucceeded,
+    originalFailureCategory: input.failureCategory,
+    invalidOutputPreview: truncateMalformedOutputForLog(input.invalidOutput),
   });
 }
 
@@ -240,26 +309,114 @@ function buildUserMessage(input: AIAnalysisRequestInput): ChatMessage {
   return { role: "user", content: parts };
 }
 
-function extractJsonObject(raw: string): unknown {
-  // The strict JSON prompt should return a pure JSON object, but models
-  // occasionally wrap it with whitespace/newlines. We accept only JSON here.
-  const trimmed = raw.trim();
+function tryParseJson(value: string): unknown | null {
   try {
-    return JSON.parse(trimmed);
+    return JSON.parse(value);
   } catch {
-    // Fallback: try to find the first {...} block.
-    const start = trimmed.indexOf("{");
-    const end = trimmed.lastIndexOf("}");
-    if (start !== -1 && end > start) {
-      try {
-        return JSON.parse(trimmed.slice(start, end + 1));
-      } catch {
-        /* fall through */
-      }
+    return null;
+  }
+}
+
+function extractJsonLookingObject(raw: string): string | null {
+  const trimmed = raw.trim();
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start === -1 || end <= start) {
+    return null;
+  }
+  return trimmed.slice(start, end + 1);
+}
+
+function getJsonRepairCandidate(raw: string, extracted: string | null): string {
+  if (extracted !== null) {
+    return extracted;
+  }
+
+  const trimmed = raw.trim();
+  const start = trimmed.indexOf("{");
+  return start === -1 ? trimmed : trimmed.slice(start);
+}
+
+function parseModelContent(raw: string): ParsedModelContentResult {
+  const trimmed = raw.trim();
+  const directParsed = tryParseJson(trimmed);
+  if (directParsed !== null) {
+    const parseResult = NormalizedResponseSchema.safeParse(directParsed);
+    if (parseResult.success) {
+      return {
+        success: true,
+        data: parseResult.data,
+        deterministicRepairAttempted: false,
+        deterministicRepairSucceeded: false,
+      };
     }
-    throw new AIProviderError(
-      "AI provider returned a non-JSON response."
-    );
+    return {
+      success: false,
+      category: "schema_error",
+      deterministicRepairAttempted: false,
+      deterministicRepairSucceeded: false,
+    };
+  }
+
+  const extracted = extractJsonLookingObject(trimmed);
+  if (extracted !== null) {
+    const extractedParsed = tryParseJson(extracted);
+    if (extractedParsed !== null) {
+      const parseResult = NormalizedResponseSchema.safeParse(extractedParsed);
+      if (parseResult.success) {
+        return {
+          success: true,
+          data: parseResult.data,
+          deterministicRepairAttempted: false,
+          deterministicRepairSucceeded: false,
+        };
+      }
+      return {
+        success: false,
+        category: "schema_error",
+        deterministicRepairAttempted: false,
+        deterministicRepairSucceeded: false,
+      };
+    }
+  }
+
+  const repairCandidate = getJsonRepairCandidate(trimmed, extracted);
+  try {
+    const repaired = jsonrepair(repairCandidate);
+    const repairedParsed = tryParseJson(repaired);
+    if (repairedParsed === null) {
+      return {
+        success: false,
+        category: "parse_error",
+        deterministicRepairAttempted: true,
+        deterministicRepairSucceeded: false,
+      };
+    }
+
+    const parseResult = NormalizedResponseSchema.safeParse(repairedParsed);
+    if (parseResult.success) {
+      return {
+        success: true,
+        data: parseResult.data,
+        deterministicRepairAttempted: true,
+        deterministicRepairSucceeded: true,
+        originalFailureCategory: "parse_error",
+      };
+    }
+
+    return {
+      success: false,
+      category: "schema_error",
+      deterministicRepairAttempted: true,
+      deterministicRepairSucceeded: true,
+    };
+  } catch {
+    return {
+      success: false,
+      category: "parse_error",
+      deterministicRepairAttempted: true,
+      deterministicRepairSucceeded: false,
+    };
   }
 }
 
@@ -279,6 +436,206 @@ function extractContentString(response: NvidiaChatResponse): string {
   throw new AIProviderError("AI provider returned empty response content.");
 }
 
+function parseAndValidateResponse(
+  response: NvidiaChatResponse
+): ParseAndValidateResult {
+  let contentString = "";
+  try {
+    contentString = extractContentString(response);
+  } catch {
+    return {
+      success: false,
+      contentString,
+      category: "parse_error",
+      deterministicRepairAttempted: false,
+      deterministicRepairSucceeded: false,
+    };
+  }
+
+  const parseResult = parseModelContent(contentString);
+  if (!parseResult.success) {
+    return {
+      ...parseResult,
+      success: false,
+      contentString,
+    };
+  }
+
+  return {
+    ...parseResult,
+    success: true,
+    contentString,
+  };
+}
+
+function buildRequestDiagnostics(input: {
+  model: string;
+  requestBody: string;
+  imageCount: number;
+  approximateImageBase64Bytes: number;
+}): ProviderRequestDiagnostics {
+  return {
+    model: input.model,
+    imageCount: input.imageCount,
+    approximateImageBase64Bytes: input.approximateImageBase64Bytes,
+    approximatePayloadBytes: getApproximateByteLength(input.requestBody),
+  };
+}
+
+async function callNvidiaChatCompletion(input: {
+  apiKey: string;
+  baseUrl: string;
+  requestBody: string;
+  diagnostics: ProviderRequestDiagnostics;
+}): Promise<NvidiaChatResponse> {
+  let response: Response;
+  const startedAt = Date.now();
+  try {
+    response = await fetch(`${input.baseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${input.apiKey}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: input.requestBody,
+    });
+  } catch (error) {
+    throw new AIProviderError(
+      `Unable to reach the AI provider: ${
+        error instanceof Error ? error.message : "unknown error"
+      }`
+    );
+  }
+
+  if (!response.ok) {
+    const providerBody = await response.text().catch(() => "");
+    logRejectedProviderResponse({
+      status: response.status,
+      durationMs: Date.now() - startedAt,
+      responseBody: providerBody,
+      diagnostics: input.diagnostics,
+    });
+
+    throw new AIProviderError(
+      `AI provider rejected the request (HTTP ${response.status}).`
+    );
+  }
+
+  try {
+    return (await response.json()) as NvidiaChatResponse;
+  } catch {
+    throw new AIProviderError(
+      "AI provider returned a non-JSON HTTP response."
+    );
+  }
+}
+
+function buildRepairPrompt(invalidOutput: string): string {
+  return `The previous response was invalid for the Lithdex schema. Convert it into exactly one valid JSON object matching one of the allowed kind variants: final, needs_images, needs_clarification, or inconclusive. Return only JSON. No markdown. No explanation outside JSON.
+
+Compact schema summary:
+- final: { "kind": "final", "summary": string, "primary_mineral_name": string|null, "confidence": number|null, "explanation": string, "tags"?: string[] max 3, "alternatives": [{ "name": string, "confidence": number|null }] max 3 }
+- needs_images: { "kind": "needs_images", "summary": string, "requested_image_types": string[], "rationale"?: string|null }
+- needs_clarification: { "kind": "needs_clarification", "summary": string, "questions": [{ "id": string, "intent_key"?: string, "prompt": string, "options"?: string[] }], "rationale"?: string|null }
+- inconclusive: { "kind": "inconclusive", "summary": string, "reason": string }
+
+Previous invalid response:
+${invalidOutput}`;
+}
+
+async function repairMalformedResponse(input: {
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+  invalidOutput: string;
+}): Promise<NvidiaChatResponse> {
+  const messages: ChatMessage[] = [
+    {
+      role: "system",
+      content:
+        "You repair malformed Lithdex model output into one schema-valid JSON object.",
+    },
+    {
+      role: "user",
+      content: buildRepairPrompt(input.invalidOutput),
+    },
+  ];
+  const requestBody = JSON.stringify({
+    model: input.model,
+    messages,
+    temperature: 0,
+    top_p: 0.1,
+    max_tokens: 1200,
+    response_format: { type: "json_object" },
+  });
+  const diagnostics = buildRequestDiagnostics({
+    model: input.model,
+    requestBody,
+    imageCount: 0,
+    approximateImageBase64Bytes: 0,
+  });
+
+  return callNvidiaChatCompletion({
+    apiKey: input.apiKey,
+    baseUrl: input.baseUrl,
+    requestBody,
+    diagnostics,
+  });
+}
+
+function mapNormalizedResponseToAIAnalysisResponse(input: {
+  parsed: NormalizedResponse;
+  rawProviderOutput: NvidiaChatResponse;
+}): AIAnalysisResponse {
+  const { parsed, rawProviderOutput } = input;
+
+  switch (parsed.kind) {
+    case "final":
+      return {
+        kind: "final",
+        summary: parsed.summary,
+        primaryMineralName: parsed.primary_mineral_name ?? null,
+        confidence: parsed.confidence ?? null,
+        explanation: parsed.explanation,
+        tags: parsed.tags,
+        alternatives: parsed.alternatives.map((a) => ({
+          name: a.name,
+          confidence: a.confidence ?? null,
+        })),
+        rawProviderOutput,
+      };
+    case "needs_images":
+      return {
+        kind: "needs_images",
+        summary: parsed.summary,
+        requestedImageTypes: parsed.requested_image_types,
+        rationale: parsed.rationale ?? null,
+        rawProviderOutput,
+      };
+    case "needs_clarification":
+      return {
+        kind: "needs_clarification",
+        summary: parsed.summary,
+        questions: parsed.questions.map((q) => ({
+          id: q.id,
+          intentKey: q.intent_key,
+          prompt: q.prompt,
+          options: q.options,
+        })),
+        rationale: parsed.rationale ?? null,
+        rawProviderOutput,
+      };
+    case "inconclusive":
+      return {
+        kind: "inconclusive",
+        summary: parsed.summary,
+        reason: parsed.reason,
+        rawProviderOutput,
+      };
+  }
+}
+
 export class NvidiaAIAnalysisProvider implements AIAnalysisProvider {
   readonly sourceType = "nvidia";
 
@@ -294,116 +651,93 @@ export class NvidiaAIAnalysisProvider implements AIAnalysisProvider {
       messages,
       temperature: 0,
       top_p: 0.1,
-      max_tokens: 1200,
+      max_tokens: 1800,
       response_format: { type: "json_object" },
     });
-    const requestDiagnostics: ProviderRequestDiagnostics = {
+    const requestDiagnostics = buildRequestDiagnostics({
       model,
+      requestBody,
       imageCount: input.images.length,
       approximateImageBase64Bytes: input.images.reduce(
         (total, image) => total + image.base64.length,
         0
       ),
-      approximatePayloadBytes: getApproximateByteLength(requestBody),
-    };
+    });
 
-    let response: Response;
-    const startedAt = Date.now();
+    const payload = await callNvidiaChatCompletion({
+      apiKey,
+      baseUrl,
+      requestBody,
+      diagnostics: requestDiagnostics,
+    });
+
+    const firstParseResult = parseAndValidateResponse(payload);
+    if (firstParseResult.success) {
+      if (firstParseResult.deterministicRepairAttempted) {
+        logMalformedResponseRepair({
+          model,
+          deterministicRepairAttempted:
+            firstParseResult.deterministicRepairAttempted,
+          deterministicRepairSucceeded:
+            firstParseResult.deterministicRepairSucceeded,
+          llmRepairAttempted: false,
+          llmRepairSucceeded: false,
+          failureCategory:
+            firstParseResult.originalFailureCategory ?? "parse_error",
+          invalidOutput: firstParseResult.contentString,
+        });
+      }
+      return mapNormalizedResponseToAIAnalysisResponse({
+        parsed: firstParseResult.data,
+        rawProviderOutput: payload,
+      });
+    }
+
+    let repairedPayload: NvidiaChatResponse;
     try {
-      response = await fetch(`${baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: requestBody,
+      repairedPayload = await repairMalformedResponse({
+        apiKey,
+        baseUrl,
+        model,
+        invalidOutput: firstParseResult.contentString,
       });
     } catch (error) {
-      throw new AIProviderError(
-        `Unable to reach the AI provider: ${
-          error instanceof Error ? error.message : "unknown error"
-        }`
-      );
-    }
-
-    if (!response.ok) {
-      const providerBody = await response.text().catch(() => "");
-      logRejectedProviderResponse({
-        status: response.status,
-        durationMs: Date.now() - startedAt,
-        responseBody: providerBody,
-        diagnostics: requestDiagnostics,
+      logMalformedResponseRepair({
+        model,
+        deterministicRepairAttempted:
+          firstParseResult.deterministicRepairAttempted,
+        deterministicRepairSucceeded:
+          firstParseResult.deterministicRepairSucceeded,
+        llmRepairAttempted: true,
+        llmRepairSucceeded: false,
+        failureCategory: firstParseResult.category,
+        invalidOutput: firstParseResult.contentString,
       });
-
-      throw new AIProviderError(
-        `AI provider rejected the request (HTTP ${response.status}).`
-      );
+      throw error;
     }
 
-    let payload: NvidiaChatResponse;
-    try {
-      payload = (await response.json()) as NvidiaChatResponse;
-    } catch {
-      throw new AIProviderError(
-        "AI provider returned a non-JSON HTTP response."
-      );
-    }
+    const repairedParseResult = parseAndValidateResponse(repairedPayload);
+    logMalformedResponseRepair({
+      model,
+      deterministicRepairAttempted:
+        firstParseResult.deterministicRepairAttempted,
+      deterministicRepairSucceeded:
+        firstParseResult.deterministicRepairSucceeded,
+      llmRepairAttempted: true,
+      llmRepairSucceeded: repairedParseResult.success,
+      failureCategory: firstParseResult.category,
+      invalidOutput: firstParseResult.contentString,
+    });
 
-    const contentString = extractContentString(payload);
-    const parsedUnknown = extractJsonObject(contentString);
-
-    const parseResult = NormalizedResponseSchema.safeParse(parsedUnknown);
-    if (!parseResult.success) {
+    if (!repairedParseResult.success) {
       throw new AIProviderError(
         "AI provider returned a response that does not match the expected schema."
       );
     }
-    const parsed = parseResult.data;
 
-    switch (parsed.kind) {
-      case "final":
-        return {
-          kind: "final",
-          summary: parsed.summary,
-          primaryMineralName: parsed.primary_mineral_name ?? null,
-          confidence: parsed.confidence ?? null,
-          explanation: parsed.explanation,
-          tags: parsed.tags,
-          alternatives: parsed.alternatives.map((a) => ({
-            name: a.name,
-            confidence: a.confidence ?? null,
-          })),
-          rawProviderOutput: payload,
-        };
-      case "needs_images":
-        return {
-          kind: "needs_images",
-          summary: parsed.summary,
-          requestedImageTypes: parsed.requested_image_types,
-          rationale: parsed.rationale ?? null,
-          rawProviderOutput: payload,
-        };
-      case "needs_clarification":
-        return {
-          kind: "needs_clarification",
-          summary: parsed.summary,
-          questions: parsed.questions.map((q) => ({
-            id: q.id,
-            intentKey: q.intent_key,
-            prompt: q.prompt,
-            options: q.options,
-          })),
-          rationale: parsed.rationale ?? null,
-          rawProviderOutput: payload,
-        };
-      case "inconclusive":
-        return {
-          kind: "inconclusive",
-          summary: parsed.summary,
-          reason: parsed.reason,
-          rawProviderOutput: payload,
-        };
-    }
+    return mapNormalizedResponseToAIAnalysisResponse({
+      parsed: repairedParseResult.data,
+      rawProviderOutput: repairedPayload,
+    });
   }
 }
